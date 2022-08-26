@@ -24,6 +24,9 @@ typedef struct EnYb {
     /* 0x41A */ s16 cutsceneIndex;
     /* 0x41C */ s16 teachingCutsceneTimer;
     /* 0x420 */ EnYbActionFunc actionFunc;
-} EnYb; // size = 0x424
+    /* 0x424 */ u8 holdTimer;
+    /* 0x425 */ u8 scrollRate;
+    /* 0x426 */ u8 longScrollTimer;
+} EnYb; // size = 0x425
 
 #endif // Z_EN_YB_H

@@ -232,6 +232,13 @@ void Graph_UpdateGame(GameState* gameState) {
     if (SREG(20) < 3) {
         func_8019E014();
     }
+
+    if (CHECK_BTN_ALL(gameState->input[0].press.button, BTN_Z) &&
+        CHECK_BTN_ALL(gameState->input[0].cur.button, BTN_L | BTN_R)) {
+        gSaveContext.gameMode = 0;
+        SET_NEXT_GAMESTATE(gameState, MapSelect_Init, MapSelectState);
+        gameState->running = false;
+    }
 }
 
 /**
