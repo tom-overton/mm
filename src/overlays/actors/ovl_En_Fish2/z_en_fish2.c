@@ -34,9 +34,9 @@ void func_80B29778(EnFish2* this);
 void func_80B297FC(EnFish2* this, PlayState* play);
 void func_80B29E5C(EnFish2* this, PlayState* play);
 void func_80B29EE4(EnFish2* this, PlayState* play);
-void func_80B2A01C(EnFish2* this, PlayState* play);
-void func_80B2A094(EnFish2* this, PlayState* play);
-void func_80B2A23C(EnFish2* this, PlayState* play);
+void EnFish2_CutsceneHandler_80B2A01C(EnFish2* this, PlayState* play);
+void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play);
+void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play);
 void EnFish2_SetupSpitUpReward(EnFish2* this);
 void EnFish2_SpitUpReward(EnFish2* this, PlayState* play);
 void EnFish2_AddEffect(EnFish2* this, Vec3f* pos, s16 timer);
@@ -236,7 +236,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
         this->unk_2B4 = 10;
         this->actor.draw = NULL;
         this->actor.flags |= ACTOR_FLAG_LOCK_ON_DISABLED;
-        this->actionFunc = func_80B2A01C;
+        this->actionFunc = EnFish2_CutsceneHandler_80B2A01C;
     }
 }
 
@@ -270,11 +270,11 @@ void func_80B287F4(EnFish2* this, s32 arg1) {
     this->unk_348 = Math_Vec3f_Pitch(&this->actor.world.pos, &sp2C);
 }
 
-s32 func_80B288E8(EnFish2* this, Vec3f vec, s32 arg2) {
-    f32 temp_f2 = this->unk_350->world.pos.x - vec.x;
-    f32 temp_f12 = this->unk_350->world.pos.y - vec.y;
-    f32 temp_f14 = this->unk_350->world.pos.z - vec.z;
-    f32 dist = sqrtf(SQ(temp_f2) + SQ(temp_f12) + SQ(temp_f14));
+s32 func_80B288E8(EnFish2* this, Vec3f pos, s32 arg2) {
+    f32 diffX = this->unk_350->world.pos.x - pos.x;
+    f32 diffY = this->unk_350->world.pos.y - pos.y;
+    f32 diffZ = this->unk_350->world.pos.z - pos.z;
+    f32 dist = sqrtf(SQ(diffX) + SQ(diffY) + SQ(diffZ));
     f32 phi_f2;
 
     if (!arg2) {
@@ -510,6 +510,7 @@ void func_80B29250(EnFish2* this, PlayState* play) {
 
         func_80B287F4(this, false);
         func_80B289DC(this, play);
+
         if (func_80B288E8(this, this->headPos, false) &&
             (((this->unk_2C8 == 0) && (D_80B2B2E4 == 1)) || (this->unk_2C8 != 0))) {
             Math_Vec3f_Copy(&this->unk_30C, &this->unk_350->world.pos);
@@ -830,19 +831,19 @@ void func_80B29EE4(EnFish2* this, PlayState* play) {
     }
 }
 
-void func_80B2A01C(EnFish2* this, PlayState* play) {
+void EnFish2_CutsceneHandler_80B2A01C(EnFish2* this, PlayState* play) {
     if (this->unk_2B4 == 0) {
         if (!CutsceneManager_IsNext(this->csIdList[0])) {
             CutsceneManager_Queue(this->csIdList[0]);
         } else {
             this->unk_2B4 = 15;
             CutsceneManager_StartWithPlayerCs(this->csIdList[0], &this->actor);
-            this->actionFunc = func_80B2A094;
+            this->actionFunc = EnFish2_CutsceneHandler_80B2A094;
         }
     }
 }
 
-void func_80B2A094(EnFish2* this, PlayState* play) {
+void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play) {
     Vec3f subCamEye;
 
     if (this->unk_2B4 == 0) {
@@ -853,6 +854,7 @@ void func_80B2A094(EnFish2* this, PlayState* play) {
 
     if (D_80B2B2EC != 0) {
         D_80B2B2EC++;
+
         if (D_80B2B2EC > 200) {
             Actor_Kill(&this->actor);
             CutsceneManager_Stop(this->csIdList[0]);
@@ -878,12 +880,12 @@ void func_80B2A094(EnFish2* this, PlayState* play) {
 
         if (this->unk_2B0 > 10) {
             this->unk_2B4 = 20;
-            this->actionFunc = func_80B2A23C;
+            this->actionFunc = EnFish2_CutsceneHandler_80B2A23C;
         }
     }
 }
 
-void func_80B2A23C(EnFish2* this, PlayState* play) {
+void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play) {
     Vec3f subCamAt;
 
     Math_Vec3f_Copy(&subCamAt, &this->actor.world.pos);
@@ -991,21 +993,14 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
     }
 
     DECR(this->unk_2B8);
-
-    if (this->unk_2B6 != 0) {
-        this->unk_2B6--;
-    }
-
-    if (this->unk_2B4 == 0) {
-    } else {
-        this->unk_2B4--;
-    }
+    DECR(this->unk_2B6);
+    DECR(this->unk_2B4);
 
     this->actionFunc(this, play);
     Actor_SetFocus(&this->actor, 0);
 
     if (this->actor.params != 1) {
-        WaterBox* sp6C;
+        WaterBox* waterBox;
         s32 i;
         Vec3f sp5C;
 
@@ -1046,7 +1041,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
             }
 
             if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
-                                     &this->waterSurface, &sp6C)) {
+                                     &this->waterSurface, &waterBox)) {
                 if ((this->waterSurface != BGCHECK_Y_MIN) &&
                     (this->waterSurface - this->unk_2D8 < this->actor.world.pos.y)) {
                     this->actor.world.pos.y = this->waterSurface - this->unk_2D8;
