@@ -24,16 +24,16 @@ void EnFish2_SetupSwim(EnFish2* this);
 void EnFish2_Swim(EnFish2* this, PlayState* play);
 void func_80B29128(EnFish2* this);
 void func_80B2913C(EnFish2* this, PlayState* play);
-void func_80B29194(EnFish2* this);
-void func_80B29250(EnFish2* this, PlayState* play);
+void EnFish2_SetupChaseDroppedPrey(EnFish2* this);
+void EnFish2_ChaseDroppedPrey(EnFish2* this, PlayState* play);
 void EnFish2_SetupBite(EnFish2* this);
 void EnFish2_Bite(EnFish2* this, PlayState* play);
 void EnFish2_SetupSwallow(EnFish2* this);
 void EnFish2_Swallow(EnFish2* this, PlayState* play);
 void EnFish2_SetupScaleUp(EnFish2* this);
 void EnFish2_ScaleUp(EnFish2* this, PlayState* play);
-void func_80B29E5C(EnFish2* this, PlayState* play);
-void func_80B29EE4(EnFish2* this, PlayState* play);
+void EnFish2_SetupChaseOtherLabFish(EnFish2* this, PlayState* play);
+void EnFish2_ChaseOtherLabFish(EnFish2* this, PlayState* play);
 void EnFish2_CutsceneHandler_80B2A01C(EnFish2* this, PlayState* play);
 void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play);
 void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play);
@@ -312,7 +312,7 @@ s32 EnFish2_IsTouchingWall(EnFish2* this, PlayState* play) {
     return false;
 }
 
-void func_80B289DC(EnFish2* this, PlayState* play) {
+void EnFish2_UpdateVelocityY(EnFish2* this, PlayState* play) {
     WaterBox* waterBox;
 
     if (this->unk_2B4 != 0) {
@@ -323,6 +323,7 @@ void func_80B289DC(EnFish2* this, PlayState* play) {
         if (this->targetRotX > 0) {
             if (this->unk_2D4 < this->actor.world.pos.y) {
                 this->actor.velocity.y = this->actor.world.rot.x * 0.001f * -0.1f;
+
                 if (this->actionFunc == EnFish2_ScaleUp) {
                     this->actor.velocity.y *= 2.0f;
                 }
@@ -336,6 +337,7 @@ void func_80B289DC(EnFish2* this, PlayState* play) {
             if ((this->waterSurface != BGCHECK_Y_MIN) &&
                 (this->actor.world.pos.y < (this->waterSurface - this->unk_2D8))) {
                 this->actor.velocity.y = this->actor.world.rot.x * 0.001f * -0.1f;
+
                 if (this->actionFunc == EnFish2_ScaleUp) {
                     this->actor.velocity.y *= 2.0f;
                 }
@@ -388,7 +390,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
         }
     }
 
-    func_80B289DC(this, play);
+    EnFish2_UpdateVelocityY(this, play);
 
     if (this->unk_2B6 == 0) {
         if (this->unk_2B4 == 0) {
@@ -442,7 +444,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
                 if ((itemAction->update != NULL) && (((EnMushi2*)itemAction)->unk_30C & 0x200)) {
                     this->targetActor = itemAction;
                     this->wasFedBugs = true;
-                    func_80B29194(this);
+                    EnFish2_SetupChaseDroppedPrey(this);
                     break;
                 }
             } else if ((itemAction->update != NULL) && (itemAction->params == 0) &&
@@ -468,7 +470,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
                     }
                 }
 
-                func_80B29194(this);
+                EnFish2_SetupChaseDroppedPrey(this);
                 break;
             }
 
@@ -490,7 +492,7 @@ void func_80B2913C(EnFish2* this, PlayState* play) {
     }
 }
 
-void func_80B29194(EnFish2* this) {
+void EnFish2_SetupChaseDroppedPrey(EnFish2* this) {
     if ((this->cutsceneHandler != NULL) && !this->wasFedBugs) {
         EnFish* fish = (EnFish*)this->targetActor;
         fish->unk_277 = 1;
@@ -508,10 +510,14 @@ void func_80B29194(EnFish2* this) {
     this->targetRotY = 0;
     this->unk_340 = (s32)Rand_ZeroOne() & 1;
     EnFish2_ChangeAnim(this, FISH2_ANIM_FAST_SWIM);
-    this->actionFunc = func_80B29250;
+    this->actionFunc = EnFish2_ChaseDroppedPrey;
 }
 
-void func_80B29250(EnFish2* this, PlayState* play) {
+/**
+ * Chases after the bugs or fish that the player dropped into the tank. Once it gets close enough to its prey, the fish
+ * will attempt to bite it.
+ */
+void EnFish2_ChaseDroppedPrey(EnFish2* this, PlayState* play) {
     if (!func_80B28478(this)) {
         Math_ApproachF(&this->actor.speed, (sScales[4] - this->scale) * 1000.0f, 0.3f, 0.3f);
 
@@ -522,7 +528,7 @@ void func_80B29250(EnFish2* this, PlayState* play) {
         }
 
         EnFish2_UpdateTargetActorSpeed(this, false);
-        func_80B289DC(this, play);
+        EnFish2_UpdateVelocityY(this, play);
 
         if (EnFish2_IsCloseEnoughToTargetActor(this, this->headPos, false) &&
             ((!this->wasFedBugs && (D_80B2B2E4 == 1)) || (this->wasFedBugs))) {
@@ -538,6 +544,11 @@ void EnFish2_SetupBite(EnFish2* this) {
     this->actionFunc = EnFish2_Bite;
 }
 
+/**
+ * Attempts to eat its prey by biting at it. If the fish's lower jaw gets close enough to its target during the bite
+ * animation, then the fish will transition to a swallowing action where its prey's instance is killed. If the fish's
+ * lower jaw does *not* get close enough to the target, then the fish will resume its chase.
+ */
 void EnFish2_Bite(EnFish2* this, PlayState* play) {
     f32 curFrame = this->skelAnime.curFrame;
 
@@ -555,12 +566,13 @@ void EnFish2_Bite(EnFish2* this, PlayState* play) {
             EnFish2_ChangeAnim(this, FISH2_ANIM_FAST_SWIM);
 
             if (this->unk_2B0 == 0) {
-                this->actionFunc = func_80B29250;
+                this->actionFunc = EnFish2_ChaseDroppedPrey;
             } else {
-                this->actionFunc = func_80B29EE4;
+                this->actionFunc = EnFish2_ChaseOtherLabFish;
             }
         } else {
-            func_80B289DC(this, play);
+            EnFish2_UpdateVelocityY(this, play);
+
             if (EnFish2_IsCloseEnoughToTargetActor(this, this->lowerJawPos, true)) {
                 EnFish2_SetupSwallow(this);
             }
@@ -653,7 +665,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
             }
 
             this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &this->unk_324);
-            func_80B289DC(this, play);
+            EnFish2_UpdateVelocityY(this, play);
             Math_ApproachF(&this->actor.world.pos.x, this->unk_324.x, 0.3f, 3.0f);
             Math_ApproachF(&this->actor.world.pos.y, this->unk_2D4, 0.3f, 3.0f);
             Math_ApproachF(&this->actor.world.pos.z, this->unk_324.z, 0.3f, 3.0f);
@@ -770,7 +782,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                     this->unk_2C4 = 0;
 
                     if (this->unk_2B0 == 0) {
-                        this->actionFunc = func_80B29E5C;
+                        this->actionFunc = EnFish2_SetupChaseOtherLabFish;
                     } else {
                         EnFish2_SetupSpitUpReward(this);
                     }
@@ -805,7 +817,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
     Math_SmoothStepToS(&this->actor.world.rot.y, this->targetRotY, 1, 0xFA0, 0);
 }
 
-void func_80B29E5C(EnFish2* this, PlayState* play) {
+void EnFish2_SetupChaseOtherLabFish(EnFish2* this, PlayState* play) {
     Actor* prop = play->actorCtx.actorLists[ACTORCAT_PROP].first;
 
     while (prop != NULL) {
@@ -818,7 +830,7 @@ void func_80B29E5C(EnFish2* this, PlayState* play) {
             this->targetActor = prop;
             this->unk_2B0 = D_80B2B2E8 = 1;
             EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
-            this->actionFunc = func_80B29EE4;
+            this->actionFunc = EnFish2_ChaseOtherLabFish;
             break;
         }
 
@@ -826,7 +838,11 @@ void func_80B29E5C(EnFish2* this, PlayState* play) {
     }
 }
 
-void func_80B29EE4(EnFish2* this, PlayState* play) {
+/**
+ * Chases after the other, smaller lab fish in the tank. In the final game, this only happens once one of the lab fishes
+ * is fed three bottled fish. Once this fish gets close enough to the smaller lab fish, it will attempt to bite it.
+ */
+void EnFish2_ChaseOtherLabFish(EnFish2* this, PlayState* play) {
     Vec3f targetActorPos;
 
     if (this->unk_2C4 < 400) {
@@ -837,7 +853,7 @@ void func_80B29EE4(EnFish2* this, PlayState* play) {
     Math_ApproachF(&this->actor.speed, 2.0f, 0.3f, 0.3f);
     Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->targetActorSpeedMultiplier, 0.1f,
                    0.4f);
-    func_80B289DC(this, play);
+    EnFish2_UpdateVelocityY(this, play);
     Math_Vec3f_Copy(&targetActorPos, &this->targetActor->world.pos);
     this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &targetActorPos);
     this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &targetActorPos);
@@ -1069,12 +1085,12 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
                 s32 temp_s0_2 = this->index * 2;
                 f32 phi_f2;
                 f32 phi_f20;
-                WaterBox* sp4C;
+                WaterBox* waterBox;
 
                 phi_f20 = phi_f2 = 0;
 
                 if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
-                                         &this->waterSurface, &sp4C)) {
+                                         &this->waterSurface, &waterBox)) {
                     phi_f20 = D_80B2B3A8[temp_s0_2] + (this->waterSurface - this->unk_2D8);
                     phi_f2 = D_80B2B3A8[temp_s0_2 + 1] + this->unk_2D4;
                 }
