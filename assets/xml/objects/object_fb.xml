@@ -4,7 +4,7 @@
         <!-- Marine Research Lab Fish Animations -->
         <Animation Name="gResearchLabFishWindUpAndChompAnim" Offset="0x6D8" /> <!-- Original name is "fb_eat" -->
         <Animation Name="gResearchLabFishFastSwimAnim" Offset="0x7D4" /> <!-- Original name is "fb_fastswim" -->
-        <Animation Name="gResearchLabFishEatAnim" Offset="0xACC" /> <!-- Original name is "fb_neweat" -->
+        <Animation Name="gResearchLabFishBiteAnim" Offset="0xACC" /> <!-- Original name is "fb_neweat" -->
         <Animation Name="gResearchLabFishSpitUpAnim" Offset="0x1174" /> <!-- Original name is "fb_spitout" -->
         <Animation Name="gResearchLabFishSwimAnim" Offset="0x13AC" /> <!-- Original name is "fb_swim" -->
 

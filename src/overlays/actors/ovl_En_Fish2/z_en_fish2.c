@@ -20,16 +20,16 @@ void EnFish2_Destroy(Actor* thisx, PlayState* play);
 void EnFish2_Update(Actor* thisx, PlayState* play2);
 void EnFish2_Draw(Actor* thisx, PlayState* play);
 
-void func_80B28B5C(EnFish2* this);
-void func_80B28C14(EnFish2* this, PlayState* play);
+void EnFish2_SetupSwim(EnFish2* this);
+void EnFish2_Swim(EnFish2* this, PlayState* play);
 void func_80B29128(EnFish2* this);
 void func_80B2913C(EnFish2* this, PlayState* play);
 void func_80B29194(EnFish2* this);
 void func_80B29250(EnFish2* this, PlayState* play);
-void EnFish2_SetupEat(EnFish2* this);
-void EnFish2_Eat(EnFish2* this, PlayState* play);
-void func_80B2951C(EnFish2* this);
-void func_80B295A4(EnFish2* this, PlayState* play);
+void EnFish2_SetupBite(EnFish2* this);
+void EnFish2_Bite(EnFish2* this, PlayState* play);
+void EnFish2_SetupSwallow(EnFish2* this);
+void EnFish2_Swallow(EnFish2* this, PlayState* play);
 void EnFish2_SetupScaleUp(EnFish2* this);
 void EnFish2_ScaleUp(EnFish2* this, PlayState* play);
 void func_80B29E5C(EnFish2* this, PlayState* play);
@@ -108,7 +108,7 @@ typedef enum {
     /* 2 */ FISH2_ANIM_WIND_UP, // unused
     /* 3 */ FISH2_ANIM_CHOMP,   // unused
     /* 4 */ FISH2_ANIM_SPIT_UP,
-    /* 5 */ FISH2_ANIM_EAT,
+    /* 5 */ FISH2_ANIM_BITE,
     /* 6 */ FISH2_ANIM_MAX
 } Fish2Animation;
 
@@ -118,7 +118,7 @@ static AnimationHeader* sAnimations[FISH2_ANIM_MAX] = {
     &gResearchLabFishWindUpAndChompAnim, // FISH2_ANIM_WIND_UP
     &gResearchLabFishWindUpAndChompAnim, // FISH2_ANIM_CHOMP
     &gResearchLabFishSpitUpAnim,         // FISH2_ANIM_SPIT_UP
-    &gResearchLabFishEatAnim,            // FISH2_ANIM_EAT
+    &gResearchLabFishBiteAnim,           // FISH2_ANIM_BITE
 };
 
 static u8 sAnimationModes[FISH2_ANIM_MAX] = {
@@ -127,7 +127,7 @@ static u8 sAnimationModes[FISH2_ANIM_MAX] = {
     ANIMMODE_ONCE, // FISH2_ANIM_WIND_UP
     ANIMMODE_ONCE, // FISH2_ANIM_CHOMP
     ANIMMODE_ONCE, // FISH2_ANIM_SPIT_UP
-    ANIMMODE_ONCE, // FISH2_ANIM_EAT
+    ANIMMODE_ONCE, // FISH2_ANIM_BITE
 };
 
 void EnFish2_ChangeAnim(EnFish2* this, s32 animIndex) {
@@ -150,21 +150,21 @@ void EnFish2_ChangeAnim(EnFish2* this, s32 animIndex) {
 }
 
 s32 func_80B28478(EnFish2* this) {
-    if (this->unk_2C8 == 0) {
+    if (!this->wasFedBugs) {
         if ((D_80B2B2E4 != 0) &&
             ((D_80B2B2E0 != 1) || (this->targetActor == NULL) || (this->targetActor->update == NULL)) &&
             (this->unk_2B0 == 0)) {
             this->unk_2B4 = 0;
             this->unk_2C4 = 0;
             this->unk_2B6 = this->unk_2B4;
-            func_80B28B5C(this);
+            EnFish2_SetupSwim(this);
             return true;
         }
     } else if ((this->targetActor == NULL) || (this->targetActor->update == NULL)) {
         this->unk_2B4 = 0;
         this->unk_2C4 = 0;
         this->unk_2B6 = this->unk_2B4;
-        func_80B28B5C(this);
+        EnFish2_SetupSwim(this);
         return true;
     }
 
@@ -232,7 +232,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
         this->collider.elements[1].dim.modelSphere.center.y = 0;
         this->collider.elements[1].dim.modelSphere.center.z = 0;
         this->actor.textId = 0x24C;
-        func_80B28B5C(this);
+        EnFish2_SetupSwim(this);
     } else if (this->actor.params != 0) {
         this->unk_2B4 = 10;
         this->actor.draw = NULL;
@@ -249,26 +249,27 @@ void EnFish2_Destroy(Actor* thisx, PlayState* play) {
     }
 }
 
-void func_80B287F4(EnFish2* this, s32 arg1) {
-    Vec3f sp2C;
+void EnFish2_UpdateTargetActorSpeed(EnFish2* this, s32 arg1) {
+    Vec3f targetActorPos;
 
-    if ((this->cutsceneHandler != NULL) && (this->unk_2C8 == 0)) {
+    if ((this->cutsceneHandler != NULL) && (!this->wasFedBugs)) {
         if (this->unk_2C4 < 400) {
             this->unk_2C4++;
         }
 
-        this->unk_338 = 440.0f - this->unk_2C4;
+        this->targetActorSpeedMultiplier = 440.0f - this->unk_2C4;
 
         if (!arg1) {
-            this->unk_338 = 410.0f - this->unk_2C4;
+            this->targetActorSpeedMultiplier = 410.0f - this->unk_2C4;
         }
 
-        Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->unk_338, 0.1f, 0.4f);
+        Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->targetActorSpeedMultiplier, 0.1f,
+                       0.4f);
     }
 
-    Math_Vec3f_Copy(&sp2C, &this->targetActor->world.pos);
-    this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &sp2C);
-    this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &sp2C);
+    Math_Vec3f_Copy(&targetActorPos, &this->targetActor->world.pos);
+    this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &targetActorPos);
+    this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &targetActorPos);
 }
 
 /**
@@ -347,12 +348,12 @@ void func_80B289DC(EnFish2* this, PlayState* play) {
     }
 }
 
-void func_80B28B5C(EnFish2* this) {
+void EnFish2_SetupSwim(EnFish2* this) {
     EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
     this->unk_2B4 = 0;
     this->targetRotX = 0;
     this->unk_2C4 = 0;
-    this->unk_2C8 = 0;
+    this->wasFedBugs = false;
     this->waterSurface = BGCHECK_Y_MIN;
     this->unk_2B6 = this->unk_2B4;
     this->angularVelocityModX = this->targetRotX;
@@ -363,10 +364,10 @@ void func_80B28B5C(EnFish2* this) {
         this->collider.elements[1].dim.modelSphere.radius = 15;
     }
 
-    this->actionFunc = func_80B28C14;
+    this->actionFunc = EnFish2_Swim;
 }
 
-void func_80B28C14(EnFish2* this, PlayState* play) {
+void EnFish2_Swim(EnFish2* this, PlayState* play) {
     Actor* itemAction = play->actorCtx.actorLists[ACTORCAT_ITEMACTION].first;
     WaterBox* waterbox;
 
@@ -440,7 +441,7 @@ void func_80B28C14(EnFish2* this, PlayState* play) {
             if (itemAction->id == ACTOR_EN_MUSHI2) {
                 if ((itemAction->update != NULL) && (((EnMushi2*)itemAction)->unk_30C & 0x200)) {
                     this->targetActor = itemAction;
-                    this->unk_2C8 = 1;
+                    this->wasFedBugs = true;
                     func_80B29194(this);
                     break;
                 }
@@ -485,19 +486,20 @@ void func_80B29128(EnFish2* this) {
 void func_80B2913C(EnFish2* this, PlayState* play) {
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
-        func_80B28B5C(this);
+        EnFish2_SetupSwim(this);
     }
 }
 
 void func_80B29194(EnFish2* this) {
-    if ((this->cutsceneHandler != NULL) && (this->unk_2C8 == 0)) {
+    if ((this->cutsceneHandler != NULL) && !this->wasFedBugs) {
         EnFish* fish = (EnFish*)this->targetActor;
         fish->unk_277 = 1;
     }
 
     this->unk_2C4 = 0;
     this->actor.speed = 0.0f;
-    if (this->unk_2C8 == 0) {
+
+    if (!this->wasFedBugs) {
         this->angularVelocityModX = 0x190;
         Math_Vec3f_Copy(&this->actor.world.pos, &this->unk_324);
         this->actor.world.pos.y = this->actor.floorHeight + (this->scale * 1200.0f);
@@ -519,28 +521,28 @@ void func_80B29250(EnFish2* this, PlayState* play) {
             this->actor.speed = 2.0f;
         }
 
-        func_80B287F4(this, false);
+        EnFish2_UpdateTargetActorSpeed(this, false);
         func_80B289DC(this, play);
 
         if (EnFish2_IsCloseEnoughToTargetActor(this, this->headPos, false) &&
-            (((this->unk_2C8 == 0) && (D_80B2B2E4 == 1)) || (this->unk_2C8 != 0))) {
+            ((!this->wasFedBugs && (D_80B2B2E4 == 1)) || (this->wasFedBugs))) {
             Math_Vec3f_Copy(&this->targetActorPos, &this->targetActor->world.pos);
-            EnFish2_SetupEat(this);
+            EnFish2_SetupBite(this);
         }
     }
 }
 
-void EnFish2_SetupEat(EnFish2* this) {
-    EnFish2_ChangeAnim(this, FISH2_ANIM_EAT);
+void EnFish2_SetupBite(EnFish2* this) {
+    EnFish2_ChangeAnim(this, FISH2_ANIM_BITE);
     this->targetRotX = 0;
-    this->actionFunc = EnFish2_Eat;
+    this->actionFunc = EnFish2_Bite;
 }
 
-void EnFish2_Eat(EnFish2* this, PlayState* play) {
+void EnFish2_Bite(EnFish2* this, PlayState* play) {
     f32 curFrame = this->skelAnime.curFrame;
 
     if (!func_80B28478(this)) {
-        func_80B287F4(this, true);
+        EnFish2_UpdateTargetActorSpeed(this, true);
         Math_ApproachF(&this->actor.speed, (sScales[4] - this->scale) * 1000.0f, 0.3f, 0.3f);
 
         if (this->actor.speed > 3.0f) {
@@ -560,18 +562,18 @@ void EnFish2_Eat(EnFish2* this, PlayState* play) {
         } else {
             func_80B289DC(this, play);
             if (EnFish2_IsCloseEnoughToTargetActor(this, this->lowerJawPos, true)) {
-                func_80B2951C(this);
+                EnFish2_SetupSwallow(this);
             }
         }
     }
 }
 
-void func_80B2951C(EnFish2* this) {
+void EnFish2_SetupSwallow(EnFish2* this) {
     this->actor.velocity.y = 0.0f;
     this->actor.gravity = 0.0f;
     this->targetRotX = 0;
 
-    if (this->unk_2C8 == 0) {
+    if (!this->wasFedBugs) {
         D_80B2B2E0 = 2;
     }
 
@@ -581,10 +583,10 @@ void func_80B2951C(EnFish2* this) {
     this->targetActor = NULL;
     D_80B2B2F4 = &this->actor;
     Actor_PlaySfx(&this->actor, NA_SE_EN_DODO_M_EAT);
-    this->actionFunc = func_80B295A4;
+    this->actionFunc = EnFish2_Swallow;
 }
 
-void func_80B295A4(EnFish2* this, PlayState* play) {
+void EnFish2_Swallow(EnFish2* this, PlayState* play) {
     s32 i;
     f32 curFrame = this->skelAnime.curFrame;
     s32 pad;
@@ -603,15 +605,15 @@ void func_80B295A4(EnFish2* this, PlayState* play) {
             EffectSsBubble_Spawn(play, &sp60, 0.0f, 5.0f, 5.0f, Rand_ZeroFloat(this->scale * 4.0f) + 0.1f);
         }
     } else if (curFrame >= this->animEndFrame) {
-        if (this->animIndex != FISH2_ANIM_EAT) {
-            EnFish2_ChangeAnim(this, FISH2_ANIM_EAT);
-        } else if (this->unk_2C8 == 0) {
+        if (this->animIndex != FISH2_ANIM_BITE) {
+            EnFish2_ChangeAnim(this, FISH2_ANIM_BITE);
+        } else if (!this->wasFedBugs) {
             EnFish2_SetupScaleUp(this);
         } else {
             this->unk_2B4 = 0;
             this->unk_2C4 = 0;
             this->unk_2B6 = this->unk_2B4;
-            func_80B28B5C(this);
+            EnFish2_SetupSwim(this);
         }
     }
 }
@@ -794,7 +796,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                         this->collider.elements[1].dim.modelSphere.radius = 15;
                     }
 
-                    func_80B28B5C(this);
+                    EnFish2_SetupSwim(this);
                 }
             }
             break;
@@ -825,23 +827,24 @@ void func_80B29E5C(EnFish2* this, PlayState* play) {
 }
 
 void func_80B29EE4(EnFish2* this, PlayState* play) {
-    Vec3f sp2C;
+    Vec3f targetActorPos;
 
     if (this->unk_2C4 < 400) {
         this->unk_2C4++;
     }
 
-    this->unk_338 = 410.0f - this->unk_2C4;
+    this->targetActorSpeedMultiplier = 410.0f - this->unk_2C4;
     Math_ApproachF(&this->actor.speed, 2.0f, 0.3f, 0.3f);
-    Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->unk_338, 0.1f, 0.4f);
+    Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->targetActorSpeedMultiplier, 0.1f,
+                   0.4f);
     func_80B289DC(this, play);
-    Math_Vec3f_Copy(&sp2C, &this->targetActor->world.pos);
-    this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &sp2C);
-    this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &sp2C);
+    Math_Vec3f_Copy(&targetActorPos, &this->targetActor->world.pos);
+    this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &targetActorPos);
+    this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &targetActorPos);
 
     if (EnFish2_IsCloseEnoughToTargetActor(this, this->headPos, false)) {
         Math_Vec3f_Copy(&this->targetActorPos, &this->targetActor->world.pos);
-        EnFish2_SetupEat(this);
+        EnFish2_SetupBite(this);
     }
 }
 
@@ -1002,7 +1005,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnFish2* this = THIS;
 
-    if ((this->actionFunc != func_80B295A4) && (this->actor.params != 1)) {
+    if ((this->actionFunc != EnFish2_Swallow) && (this->actor.params != 1)) {
         SkelAnime_Update(&this->skelAnime);
     }
 
@@ -1062,7 +1065,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
                 }
             }
 
-            if (!D_80B2B2E8 && (this->actionFunc == func_80B28C14)) {
+            if (!D_80B2B2E8 && (this->actionFunc == EnFish2_Swim)) {
                 s32 temp_s0_2 = this->index * 2;
                 f32 phi_f2;
                 f32 phi_f20;

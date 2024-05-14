@@ -34,7 +34,7 @@ typedef struct EnFish2 {
     /* 0x2BA */ s16 csIdList[3];
     /* 0x2C0 */ s32 scaleIndex;
     /* 0x2C4 */ s32 unk_2C4;
-    /* 0x2C8 */ u8 unk_2C8;
+    /* 0x2C8 */ u8 wasFedBugs;
     /* 0x2CA */ s16 subCamId;
     /* 0x2CC */ f32 animEndFrame;
     /* 0x2D0 */ UNK_TYPE1 unk_2D0[0x4];
@@ -49,7 +49,7 @@ typedef struct EnFish2 {
     /* 0x324 */ Vec3f unk_324;
     /* 0x330 */ f32 scale;
     /* 0x334 */ f32 waterSurface;
-    /* 0x338 */ f32 unk_338;
+    /* 0x338 */ f32 targetActorSpeedMultiplier;
     /* 0x33C */ f32 wallCheckRadius;
     /* 0x340 */ s32 unk_340;
     /* 0x344 */ s32 index;
