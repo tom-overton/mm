@@ -562,7 +562,7 @@ void EnJso2_IntroCutscene(EnJso2* this, PlayState* play) {
                     rockPos.y = this->actor.world.pos.y + (i * 120.0f);
                     rockPos.z += Rand_CenteredFloat(80.0f);
                     Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COL_MAN, rockPos.x, rockPos.y, rockPos.z, 0,
-                                this->actor.world.rot.y, 0, EN_COL_MAN_FALLING_ROCK);
+                                this->actor.world.rot.y, 0, EN_COL_MAN_TYPE_FALLING_ROCK);
                 }
 
                 this->cutsceneTimer = 25;
@@ -1353,7 +1353,7 @@ void EnJso2_DeathCutscene(EnJso2* this, PlayState* play) {
 
     if ((this->animIndex == EN_JSO2_TAKE_OUT_BOMB) && (curFrame >= this->animEndFrame) && (this->bomb == NULL)) {
         this->bomb = Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_COL_MAN, this->bombPos.x,
-                                        this->bombPos.y, this->bombPos.z, 0, 0, 0, EN_COL_MAN_CUTSCENE_BOMB);
+                                        this->bombPos.y, this->bombPos.z, 0, 0, 0, EN_COL_MAN_TYPE_CUTSCENE_BOMB);
     }
 
     if (this->bomb != NULL) {
@@ -1497,7 +1497,7 @@ void EnJso2_BlowUp(EnJso2* this, PlayState* play) {
     if ((this->animIndex == EN_JSO2_TAKE_OUT_BOMB) && (curFrame >= this->animEndFrame)) {
         if (this->bomb == NULL) {
             this->bomb = Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_COL_MAN, this->bombPos.x,
-                                            this->bombPos.y, this->bombPos.z, 0, 0, 0, EN_COL_MAN_GAMEPLAY_BOMB);
+                                            this->bombPos.y, this->bombPos.z, 0, 0, 0, EN_COL_MAN_TYPE_GAMEPLAY_BOMB);
         } else if (this->blowUpFrameCounter >= 10) {
             if (this->bomb != NULL) {
                 this->bomb->world.rot.z = 1;

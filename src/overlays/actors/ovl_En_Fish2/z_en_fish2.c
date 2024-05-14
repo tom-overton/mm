@@ -6,9 +6,10 @@
 
 #include "z_en_fish2.h"
 #include "attributes.h"
+#include "assets/objects/gameplay_keep/gameplay_keep.h"
+#include "overlays/actors/ovl_En_Col_Man/z_en_col_man.h"
 #include "overlays/actors/ovl_En_Fish/z_en_fish.h"
 #include "overlays/actors/ovl_En_Mushi2/z_en_mushi2.h"
-#include "assets/objects/gameplay_keep/gameplay_keep.h"
 
 #define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY | ACTOR_FLAG_10)
 
@@ -36,8 +37,8 @@ void func_80B29EE4(EnFish2* this, PlayState* play);
 void func_80B2A01C(EnFish2* this, PlayState* play);
 void func_80B2A094(EnFish2* this, PlayState* play);
 void func_80B2A23C(EnFish2* this, PlayState* play);
-void func_80B2A448(EnFish2* this);
-void func_80B2A498(EnFish2* this, PlayState* play);
+void EnFish2_SetupSpitUpReward(EnFish2* this);
+void EnFish2_SpitUpReward(EnFish2* this, PlayState* play);
 void func_80B2ADB0(EnFish2* this, Vec3f* vec, s16 arg2);
 void func_80B2AF80(EnFish2* this, PlayState* play);
 void func_80B2B180(EnFish2* this, PlayState* play);
@@ -46,7 +47,7 @@ static s32 D_80B2B2E0 = 0;
 static s32 D_80B2B2E4 = 0;
 static s32 D_80B2B2E8 = false;
 static s32 D_80B2B2EC = 0;
-static s32 D_80B2B2F0 = 0;
+static s32 sCurrentIndex = 0;
 static Actor* D_80B2B2F4 = NULL;
 
 ActorProfile En_Fish2_Profile = {
@@ -71,7 +72,7 @@ static ColliderJntSphElementInit sJntSphElementsInit[2] = {
             ACELEM_NONE,
             OCELEM_ON,
         },
-        { 1, { { 0, 0, 0 }, 0 }, 1 },
+        { RESEARCH_LAB_FISH_LIMB_ROOT, { { 0, 0, 0 }, 0 }, 1 },
     },
     {
         {
@@ -82,7 +83,7 @@ static ColliderJntSphElementInit sJntSphElementsInit[2] = {
             ACELEM_NONE,
             OCELEM_ON,
         },
-        { 17, { { 0, 0, 0 }, 0 }, 1 },
+        { RESEARCH_LAB_FISH_LIMB_HEAD, { { 0, 0, 0 }, 0 }, 1 },
     },
 };
 
@@ -99,34 +100,34 @@ static ColliderJntSphInit sJntSphInit = {
     sJntSphElementsInit,
 };
 
-static f32 D_80B2B370[] = { 0.01f, 0.012f, 0.014f, 0.017f, 0.019f, 0.033f };
+static f32 sScales[] = { 0.01f, 0.012f, 0.014f, 0.017f, 0.019f, 0.033f };
 
 typedef enum {
-    /* 0 */ FISH2_ANIM_0,
-    /* 1 */ FISH2_ANIM_1,
-    /* 2 */ FISH2_ANIM_2,
-    /* 3 */ FISH2_ANIM_3,
-    /* 4 */ FISH2_ANIM_4,
-    /* 5 */ FISH2_ANIM_5,
+    /* 0 */ FISH2_ANIM_SWIM,
+    /* 1 */ FISH2_ANIM_FAST_SWIM,
+    /* 2 */ FISH2_ANIM_WIND_UP, // unused
+    /* 3 */ FISH2_ANIM_CHOMP,   // unused
+    /* 4 */ FISH2_ANIM_SPIT_UP,
+    /* 5 */ FISH2_ANIM_EAT,
     /* 6 */ FISH2_ANIM_MAX
 } Fish2Animation;
 
 static AnimationHeader* sAnimations[FISH2_ANIM_MAX] = {
-    &object_fb_Anim_0013AC, // FISH2_ANIM_0
-    &object_fb_Anim_0007D4, // FISH2_ANIM_1
-    &object_fb_Anim_0006D8, // FISH2_ANIM_2
-    &object_fb_Anim_0006D8, // FISH2_ANIM_3
-    &object_fb_Anim_001174, // FISH2_ANIM_4
-    &object_fb_Anim_000ACC, // FISH2_ANIM_5
+    &gResearchLabFishSwimAnim,           // FISH2_ANIM_SWIM
+    &gResearchLabFishFastSwimAnim,       // FISH2_ANIM_FAST_SWIM
+    &gResearchLabFishWindUpAndChompAnim, // FISH2_ANIM_WIND_UP
+    &gResearchLabFishWindUpAndChompAnim, // FISH2_ANIM_CHOMP
+    &gResearchLabFishSpitUpAnim,         // FISH2_ANIM_SPIT_UP
+    &gResearchLabFishEatAnim,            // FISH2_ANIM_EAT
 };
 
 static u8 sAnimationModes[FISH2_ANIM_MAX] = {
-    ANIMMODE_LOOP, // FISH2_ANIM_0
-    ANIMMODE_LOOP, // FISH2_ANIM_1
-    ANIMMODE_ONCE, // FISH2_ANIM_2
-    ANIMMODE_ONCE, // FISH2_ANIM_3
-    ANIMMODE_ONCE, // FISH2_ANIM_4
-    ANIMMODE_ONCE, // FISH2_ANIM_5
+    ANIMMODE_LOOP, // FISH2_ANIM_SWIM
+    ANIMMODE_LOOP, // FISH2_ANIM_FAST_SWIM
+    ANIMMODE_ONCE, // FISH2_ANIM_WIND_UP
+    ANIMMODE_ONCE, // FISH2_ANIM_CHOMP
+    ANIMMODE_ONCE, // FISH2_ANIM_SPIT_UP
+    ANIMMODE_ONCE, // FISH2_ANIM_EAT
 };
 
 void EnFish2_ChangeAnim(EnFish2* this, s32 animIndex) {
@@ -136,11 +137,11 @@ void EnFish2_ChangeAnim(EnFish2* this, s32 animIndex) {
     this->animEndFrame = Animation_GetLastFrame(&sAnimations[animIndex]->common);
 
     startFrame = 0.0f;
-    if (this->animIndex == FISH2_ANIM_3) {
+    if (this->animIndex == FISH2_ANIM_CHOMP) {
         startFrame = Animation_GetLastFrame(&sAnimations[this->animIndex]->common) - 21.0f;
     }
 
-    if (this->animIndex == FISH2_ANIM_2) {
+    if (this->animIndex == FISH2_ANIM_WIND_UP) {
         this->animEndFrame = Animation_GetLastFrame(&sAnimations[this->animIndex]->common) - 21.0f;
     }
 
@@ -175,41 +176,43 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
     s32 csId;
 
     Math_Vec3f_Copy(&this->unk_324, &this->actor.home.pos);
-    this->unk_344 = D_80B2B2F0;
-    D_80B2B2F0++;
+    this->index = sCurrentIndex;
+    sCurrentIndex++;
 
     if (this->actor.params == 0) {
         ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 20.0f);
-        SkelAnime_InitFlex(play, &this->skelAnime, &object_fb_Skel_006190, &object_fb_Anim_0013AC, this->jointTable,
-                           this->morphTable, OBJECT_FB_LIMB_MAX);
+        SkelAnime_InitFlex(play, &this->skelAnime, &gResearchLabFishSkel, &gResearchLabFishSwimAnim, this->jointTable,
+                           this->morphTable, RESEARCH_LAB_FISH_LIMB_MAX);
         this->actor.colChkInfo.mass = MASS_IMMOVABLE;
-        if (this->unk_344 == 0) {
+
+        if (this->index == 0) {
             if (CHECK_WEEKEVENTREG(WEEKEVENTREG_81_10)) {
-                this->unk_2C0 = 1;
+                this->scaleIndex = 1;
             }
 
             if (CHECK_WEEKEVENTREG(WEEKEVENTREG_81_20)) {
-                this->unk_2C0 = 2;
+                this->scaleIndex = 2;
             }
 
             if (CHECK_WEEKEVENTREG(WEEKEVENTREG_81_40)) {
-                this->unk_2C0 = 3;
+                this->scaleIndex = 3;
             }
         } else {
             if (CHECK_WEEKEVENTREG(WEEKEVENTREG_81_80)) {
-                this->unk_2C0 = 1;
+                this->scaleIndex = 1;
             }
 
             if (CHECK_WEEKEVENTREG(WEEKEVENTREG_82_01)) {
-                this->unk_2C0 = 2;
+                this->scaleIndex = 2;
             }
 
             if (CHECK_WEEKEVENTREG(WEEKEVENTREG_82_02)) {
-                this->unk_2C0 = 3;
+                this->scaleIndex = 3;
             }
         }
+
         csId = this->actor.csId;
-        this->unk_330 = D_80B2B370[this->unk_2C0];
+        this->scale = sScales[this->scaleIndex];
         i = 0;
 
         // clang-format off
@@ -252,12 +255,16 @@ void func_80B287F4(EnFish2* this, s32 arg1) {
         if (this->unk_2C4 < 400) {
             this->unk_2C4++;
         }
+
         this->unk_338 = 440.0f - this->unk_2C4;
+
         if (!arg1) {
             this->unk_338 = 410.0f - this->unk_2C4;
         }
-        Math_ApproachF(&this->unk_350->speed, (D_80B2B370[4] - this->unk_330) * this->unk_338, 0.1f, 0.4f);
+
+        Math_ApproachF(&this->unk_350->speed, (sScales[4] - this->scale) * this->unk_338, 0.1f, 0.4f);
     }
+
     Math_Vec3f_Copy(&sp2C, &this->unk_350->world.pos);
     this->unk_34A = Math_Vec3f_Yaw(&this->actor.world.pos, &sp2C);
     this->unk_348 = Math_Vec3f_Pitch(&this->actor.world.pos, &sp2C);
@@ -273,7 +280,7 @@ s32 func_80B288E8(EnFish2* this, Vec3f vec, s32 arg2) {
     if (!arg2) {
         phi_f2 = 40.0f;
     } else {
-        phi_f2 = this->unk_330 * 2000.0f;
+        phi_f2 = this->scale * 2000.0f;
         if (phi_f2 > 20.0f) {
             phi_f2 = 20.0f;
         }
@@ -287,7 +294,7 @@ s32 func_80B288E8(EnFish2* this, Vec3f vec, s32 arg2) {
 }
 
 s32 func_80B2899C(EnFish2* this, PlayState* play) {
-    if (BgCheck_SphVsFirstWall(&play->colCtx, &this->unk_2F4, this->unk_33C)) {
+    if (BgCheck_SphVsFirstWall(&play->colCtx, &this->wallCheckPos, this->wallCheckRadius)) {
         return true;
     }
 
@@ -314,8 +321,9 @@ void func_80B289DC(EnFish2* this, PlayState* play) {
                 this->actor.gravity = 0.0f;
             }
         } else if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
-                                        &this->unk_334, &waterBox)) {
-            if ((this->unk_334 != BGCHECK_Y_MIN) && (this->actor.world.pos.y < (this->unk_334 - this->unk_2D8))) {
+                                        &this->waterSurface, &waterBox)) {
+            if ((this->waterSurface != BGCHECK_Y_MIN) &&
+                (this->actor.world.pos.y < (this->waterSurface - this->unk_2D8))) {
                 this->actor.velocity.y = this->actor.world.rot.x * 0.001f * -0.1f;
                 if (this->actionFunc == func_80B297FC) {
                     this->actor.velocity.y *= 2.0f;
@@ -330,19 +338,21 @@ void func_80B289DC(EnFish2* this, PlayState* play) {
 }
 
 void func_80B28B5C(EnFish2* this) {
-    EnFish2_ChangeAnim(this, FISH2_ANIM_0);
+    EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
     this->unk_2B4 = 0;
     this->unk_348 = 0;
     this->unk_2C4 = 0;
     this->unk_2C8 = 0;
-    this->unk_334 = BGCHECK_Y_MIN;
+    this->waterSurface = BGCHECK_Y_MIN;
     this->unk_2B6 = this->unk_2B4;
     this->unk_34C = this->unk_348;
     this->unk_34A = this->actor.world.rot.y;
-    this->collider.elements[1].dim.modelSphere.radius = (s32)((this->unk_330 - 0.01f) * 1000.0f) + 5;
+
+    this->collider.elements[1].dim.modelSphere.radius = (s32)((this->scale - 0.01f) * 1000.0f) + 5;
     if (this->collider.elements[1].dim.modelSphere.radius > 15) {
         this->collider.elements[1].dim.modelSphere.radius = 15;
     }
+
     this->actionFunc = func_80B28C14;
 }
 
@@ -362,7 +372,8 @@ void func_80B28C14(EnFish2* this, PlayState* play) {
             } else {
                 this->unk_34A -= 0x4000;
             }
-            this->unk_2B8 = (s32)(this->unk_330 * 1000.0f) - 10;
+
+            this->unk_2B8 = (s32)(this->scale * 1000.0f) - 10;
         }
     }
 
@@ -386,19 +397,20 @@ void func_80B28C14(EnFish2* this, PlayState* play) {
             }
 
             this->unk_2B6 = (s32)Rand_ZeroFloat(70.0f) + 30;
-            if (this->unk_2C0 >= 3) {
+            if (this->scaleIndex >= 3) {
                 this->unk_2B6 -= (s32)Rand_ZeroFloat(20.0f);
             }
         }
     }
 
-    if ((this->unk_334 == BGCHECK_Y_MIN) && !WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x,
-                                                                  this->actor.world.pos.z, &this->unk_334, &waterbox)) {
-        this->unk_334 = this->actor.world.pos.y;
+    if ((this->waterSurface == BGCHECK_Y_MIN) &&
+        !WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
+                              &this->waterSurface, &waterbox)) {
+        this->waterSurface = this->actor.world.pos.y;
     }
 
     if (this->unk_2B4 == 0) {
-        Math_ApproachF(&this->actor.speed, (D_80B2B370[4] - this->unk_330) * 400.0f, 0.3f, 0.3f);
+        Math_ApproachF(&this->actor.speed, (sScales[4] - this->scale) * 400.0f, 0.3f, 0.3f);
         if (this->actor.speed > 3.0f) {
             this->actor.speed = 3.0f;
         } else if (this->actor.speed < 1.5f) {
@@ -427,6 +439,7 @@ void func_80B28C14(EnFish2* this, PlayState* play) {
                        (fabsf(itemAction->world.pos.z - this->actor.world.pos.z) < 100.0f) &&
                        (itemAction->bgCheckFlags & BGCHECKFLAG_WATER)) {
                 this->unk_350 = itemAction;
+
                 if (D_80B2B2E0 == 0) {
                     EnFish2* fish;
 
@@ -434,6 +447,7 @@ void func_80B28C14(EnFish2* this, PlayState* play) {
                     fish = (EnFish2*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_FISH2,
                                                         this->unk_324.x, this->unk_324.y, this->unk_324.z, 0, 0, 0, 1);
                     this->unk_354 = fish;
+
                     if (this->unk_354 != NULL) {
                         D_80B2B2E4 = 0;
                         D_80B2B2E0 = 1;
@@ -441,9 +455,11 @@ void func_80B28C14(EnFish2* this, PlayState* play) {
                         fish->unk_350 = this->unk_350;
                     }
                 }
+
                 func_80B29194(this);
                 break;
             }
+
             itemAction = itemAction->next;
         }
 
@@ -473,18 +489,18 @@ void func_80B29194(EnFish2* this) {
     if (this->unk_2C8 == 0) {
         this->unk_34C = 400;
         Math_Vec3f_Copy(&this->actor.world.pos, &this->unk_324);
-        this->actor.world.pos.y = this->actor.floorHeight + (this->unk_330 * 1200.0f);
+        this->actor.world.pos.y = this->actor.floorHeight + (this->scale * 1200.0f);
     }
 
     this->unk_34A = 0;
     this->unk_340 = (s32)Rand_ZeroOne() & 1;
-    EnFish2_ChangeAnim(this, FISH2_ANIM_1);
+    EnFish2_ChangeAnim(this, FISH2_ANIM_FAST_SWIM);
     this->actionFunc = func_80B29250;
 }
 
 void func_80B29250(EnFish2* this, PlayState* play) {
     if (!func_80B28478(this)) {
-        Math_ApproachF(&this->actor.speed, (D_80B2B370[4] - this->unk_330) * 1000.0f, 0.3f, 0.3f);
+        Math_ApproachF(&this->actor.speed, (sScales[4] - this->scale) * 1000.0f, 0.3f, 0.3f);
 
         if (this->actor.speed > 4.0f) {
             this->actor.speed = 4.0f;
@@ -494,7 +510,7 @@ void func_80B29250(EnFish2* this, PlayState* play) {
 
         func_80B287F4(this, false);
         func_80B289DC(this, play);
-        if (func_80B288E8(this, this->unk_300, false) &&
+        if (func_80B288E8(this, this->headPos, false) &&
             (((this->unk_2C8 == 0) && (D_80B2B2E4 == 1)) || (this->unk_2C8 != 0))) {
             Math_Vec3f_Copy(&this->unk_30C, &this->unk_350->world.pos);
             func_80B2938C(this);
@@ -503,7 +519,7 @@ void func_80B29250(EnFish2* this, PlayState* play) {
 }
 
 void func_80B2938C(EnFish2* this) {
-    EnFish2_ChangeAnim(this, FISH2_ANIM_5);
+    EnFish2_ChangeAnim(this, FISH2_ANIM_EAT);
     this->unk_348 = 0;
     this->actionFunc = func_80B293C4;
 }
@@ -513,7 +529,7 @@ void func_80B293C4(EnFish2* this, PlayState* play) {
 
     if (!func_80B28478(this)) {
         func_80B287F4(this, true);
-        Math_ApproachF(&this->actor.speed, (D_80B2B370[4] - this->unk_330) * 1000.0f, 0.3f, 0.3f);
+        Math_ApproachF(&this->actor.speed, (sScales[4] - this->scale) * 1000.0f, 0.3f, 0.3f);
 
         if (this->actor.speed > 3.0f) {
             this->actor.speed = 3.0f;
@@ -522,7 +538,7 @@ void func_80B293C4(EnFish2* this, PlayState* play) {
         }
 
         if (curFrame >= this->animEndFrame) {
-            EnFish2_ChangeAnim(this, FISH2_ANIM_1);
+            EnFish2_ChangeAnim(this, FISH2_ANIM_FAST_SWIM);
             if (this->unk_2B0 == 0) {
                 this->actionFunc = func_80B29250;
             } else {
@@ -530,7 +546,7 @@ void func_80B293C4(EnFish2* this, PlayState* play) {
             }
         } else {
             func_80B289DC(this, play);
-            if (func_80B288E8(this, this->unk_318, true)) {
+            if (func_80B288E8(this, this->lowerJawPos, true)) {
                 func_80B2951C(this);
             }
         }
@@ -564,17 +580,18 @@ void func_80B295A4(EnFish2* this, PlayState* play) {
     SkelAnime_Update(&this->skelAnime);
     Math_SmoothStepToS(&this->actor.world.rot.y, Math_Vec3f_Yaw(&this->actor.world.pos, &play->view.eye), 1, 0x1388, 0);
     Math_ApproachZeroF(&this->actor.speed, 0.3f, 0.3f);
+
     if (this->unk_2B4 != 0) {
-        Math_Vec3f_Copy(&sp60, &this->unk_318);
+        Math_Vec3f_Copy(&sp60, &this->lowerJawPos);
         sp60.x += Rand_CenteredFloat(100.0f);
         sp60.z += Rand_CenteredFloat(100.0f);
 
         for (i = 0; i < 2; i++) {
-            EffectSsBubble_Spawn(play, &sp60, 0.0f, 5.0f, 5.0f, Rand_ZeroFloat(this->unk_330 * 4.0f) + 0.1f);
+            EffectSsBubble_Spawn(play, &sp60, 0.0f, 5.0f, 5.0f, Rand_ZeroFloat(this->scale * 4.0f) + 0.1f);
         }
     } else if (curFrame >= this->animEndFrame) {
-        if (this->animIndex != FISH2_ANIM_5) {
-            EnFish2_ChangeAnim(this, FISH2_ANIM_5);
+        if (this->animIndex != FISH2_ANIM_EAT) {
+            EnFish2_ChangeAnim(this, FISH2_ANIM_EAT);
         } else if (this->unk_2C8 == 0) {
             func_80B29778(this);
         } else {
@@ -587,14 +604,16 @@ void func_80B295A4(EnFish2* this, PlayState* play) {
 }
 
 void func_80B29778(EnFish2* this) {
-    EnFish2_ChangeAnim(this, FISH2_ANIM_0);
+    EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
     this->unk_2B4 = 0;
     this->unk_2C4 = 0;
     this->unk_2B6 = this->unk_2B4;
+
     if (this->unk_2B0 != 0) {
         this->unk_324.x = this->actor.home.pos.x - 14.0f;
         this->unk_324.z = this->actor.home.pos.z - 18.0f;
     }
+
     this->actionFunc = func_80B297FC;
     this->unk_324.y = this->unk_2D4;
     this->actor.speed = 0.0f;
@@ -636,26 +655,28 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
 
         case 1:
             Math_SmoothStepToS(&this->unk_348, 0, 1, 0x7D0, 0);
+
             if ((fabsf(this->actor.world.rot.y - this->unk_34A) < 100.0f) && (fabsf(this->actor.world.rot.x) < 30.0f)) {
-                this->unk_2C0++;
-                if (this->unk_344 == 0) {
-                    if (this->unk_2C0 == 1) {
+                this->scaleIndex++;
+
+                if (this->index == 0) {
+                    if (this->scaleIndex == 1) {
                         SET_WEEKEVENTREG(WEEKEVENTREG_81_10);
-                    } else if (this->unk_2C0 == 2) {
+                    } else if (this->scaleIndex == 2) {
                         SET_WEEKEVENTREG(WEEKEVENTREG_81_20);
-                    } else if (this->unk_2C0 == 3) {
+                    } else if (this->scaleIndex == 3) {
                         SET_WEEKEVENTREG(WEEKEVENTREG_81_40);
                     }
-                } else if (this->unk_2C0 == 1) {
+                } else if (this->scaleIndex == 1) {
                     SET_WEEKEVENTREG(WEEKEVENTREG_81_80);
-                } else if (this->unk_2C0 == 2) {
+                } else if (this->scaleIndex == 2) {
                     SET_WEEKEVENTREG(WEEKEVENTREG_82_01);
-                } else if (this->unk_2C0 == 3) {
+                } else if (this->scaleIndex == 3) {
                     SET_WEEKEVENTREG(WEEKEVENTREG_82_02);
                 }
 
                 if (this->unk_2B0 != 0) {
-                    this->unk_2C0 = 5;
+                    this->scaleIndex = 5;
                 }
 
                 this->unk_2B6 = 4;
@@ -677,7 +698,7 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
                 phi_f0 = 0.5f;
             }
 
-            Math_ApproachF(&this->unk_330, D_80B2B370[this->unk_2C0] * phi_f0, 0.3f, 0.004f);
+            Math_ApproachF(&this->scale, sScales[this->scaleIndex] * phi_f0, 0.3f, 0.004f);
 
             if (this->unk_2B6 == 0) {
                 Vec3f sp3C;
@@ -690,6 +711,7 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
                 for (i = 0; i < 30; i++) {
                     func_80B2ADB0(this, &sp3C, 0x46);
                 }
+
                 this->unk_2C4++;
                 this->unk_2B6 = 2;
             }
@@ -708,7 +730,7 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
                 phi_f0 = 1.7f;
             }
 
-            Math_ApproachF(&this->unk_330, D_80B2B370[this->unk_2C0] * phi_f0, 0.3f, 0.004f);
+            Math_ApproachF(&this->scale, sScales[this->scaleIndex] * phi_f0, 0.3f, 0.004f);
 
             if (this->unk_2B6 == 0) {
                 this->unk_2B6 = 2;
@@ -717,7 +739,7 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
             break;
 
         case 8:
-            Math_ApproachF(&this->unk_330, D_80B2B370[this->unk_2C0], 0.3f, 0.004f);
+            Math_ApproachF(&this->scale, sScales[this->scaleIndex], 0.3f, 0.004f);
             if (this->unk_2B6 == 0) {
                 this->unk_2B6 = 30;
                 this->unk_2C4++;
@@ -726,18 +748,20 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
 
         case 9:
             if (this->unk_2B6 == 0) {
-                if (this->unk_2C0 > 3) {
-                    this->unk_2C0 = 3;
+                if (this->scaleIndex > 3) {
+                    this->scaleIndex = 3;
                     this->unk_2C4 = 0;
+
                     if (this->unk_2B0 == 0) {
                         this->actionFunc = func_80B29E5C;
                     } else {
-                        func_80B2A448(this);
+                        EnFish2_SetupSpitUpReward(this);
                     }
                 } else {
                     this->unk_2B6 = 0;
                     this->unk_2B4 = 0;
                     this->unk_2C4 = 0;
+
                     if (D_80B2B2EC > 200) {
                         D_80B2B2E4 = 0;
                         D_80B2B2E0 = D_80B2B2EC = 0;
@@ -745,15 +769,16 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
                         D_80B2B2E4 = 3;
                     }
 
-                    this->collider.elements[0].dim.modelSphere.radius = (s32)((this->unk_330 - 0.01f) * 1000.0f) + 5;
+                    this->collider.elements[0].dim.modelSphere.radius = (s32)((this->scale - 0.01f) * 1000.0f) + 5;
                     if (this->collider.elements[0].dim.modelSphere.radius > 15) {
                         this->collider.elements[0].dim.modelSphere.radius = 15;
                     }
 
-                    this->collider.elements[1].dim.modelSphere.radius = (s32)((this->unk_330 - 0.01f) * 1000.0f) + 5;
+                    this->collider.elements[1].dim.modelSphere.radius = (s32)((this->scale - 0.01f) * 1000.0f) + 5;
                     if (this->collider.elements[1].dim.modelSphere.radius > 15) {
                         this->collider.elements[1].dim.modelSphere.radius = 15;
                     }
+
                     func_80B28B5C(this);
                 }
             }
@@ -775,7 +800,7 @@ void func_80B29E5C(EnFish2* this, PlayState* play) {
         if (&this->actor != prop) {
             this->unk_350 = prop;
             this->unk_2B0 = D_80B2B2E8 = 1;
-            EnFish2_ChangeAnim(this, FISH2_ANIM_0);
+            EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
             this->actionFunc = func_80B29EE4;
             break;
         }
@@ -790,14 +815,16 @@ void func_80B29EE4(EnFish2* this, PlayState* play) {
     if (this->unk_2C4 < 400) {
         this->unk_2C4++;
     }
+
     this->unk_338 = 410.0f - this->unk_2C4;
     Math_ApproachF(&this->actor.speed, 2.0f, 0.3f, 0.3f);
-    Math_ApproachF(&this->unk_350->speed, (D_80B2B370[4] - this->unk_330) * this->unk_338, 0.1f, 0.4f);
+    Math_ApproachF(&this->unk_350->speed, (sScales[4] - this->scale) * this->unk_338, 0.1f, 0.4f);
     func_80B289DC(this, play);
     Math_Vec3f_Copy(&sp2C, &this->unk_350->world.pos);
     this->unk_34A = Math_Vec3f_Yaw(&this->actor.world.pos, &sp2C);
     this->unk_348 = Math_Vec3f_Pitch(&this->actor.world.pos, &sp2C);
-    if (func_80B288E8(this, this->unk_300, false)) {
+
+    if (func_80B288E8(this, this->headPos, false)) {
         Math_Vec3f_Copy(&this->unk_30C, &this->unk_350->world.pos);
         func_80B2938C(this);
     }
@@ -848,6 +875,7 @@ void func_80B2A094(EnFish2* this, PlayState* play) {
     if ((this->unk_350 == NULL) || (this->unk_350->update == NULL)) {
         this->unk_350 = NULL;
         this->unk_2B0++;
+        
         if (this->unk_2B0 > 10) {
             this->unk_2B4 = 20;
             this->actionFunc = func_80B2A23C;
@@ -888,28 +916,29 @@ void func_80B2A23C(EnFish2* this, PlayState* play) {
     }
 }
 
-void func_80B2A448(EnFish2* this) {
-    EnFish2_ChangeAnim(this, FISH2_ANIM_4);
+void EnFish2_SetupSpitUpReward(EnFish2* this) {
+    EnFish2_ChangeAnim(this, FISH2_ANIM_SPIT_UP);
     this->unk_2B4 = 0;
     this->unk_2C4 = 0;
     this->unk_2B6 = this->unk_2B4;
     D_80B2B2E4 = 2;
-    this->actionFunc = func_80B2A498;
+    this->actionFunc = EnFish2_SpitUpReward;
 }
 
-void func_80B2A498(EnFish2* this, PlayState* play) {
+void EnFish2_SpitUpReward(EnFish2* this, PlayState* play) {
     f32 curFrame = this->skelAnime.curFrame;
-    Vec3f sp80;
+    Vec3f pos;
 
-    if ((this->animIndex == FISH2_ANIM_4) && Animation_OnFrame(&this->skelAnime, 13.0f)) {
-        Actor* temp_v0;
+    if ((this->animIndex == FISH2_ANIM_SPIT_UP) && Animation_OnFrame(&this->skelAnime, 13.0f)) {
+        Actor* heartPiece;
 
-        Math_Vec3f_Copy(&sp80, &this->unk_318);
-        temp_v0 = Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COL_MAN, sp80.x, sp80.y, sp80.z, 0,
-                              this->actor.world.rot.y, 0, 0);
-        if (temp_v0 != NULL) {
-            temp_v0->speed = 4.0f;
-            temp_v0->velocity.y = 15.0f;
+        Math_Vec3f_Copy(&pos, &this->lowerJawPos);
+        heartPiece = Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COL_MAN, pos.x, pos.y, pos.z, 0,
+                                 this->actor.world.rot.y, 0, EN_COL_MAN_TYPE_HEART_PIECE);
+
+        if (heartPiece != NULL) {
+            heartPiece->speed = 4.0f;
+            heartPiece->velocity.y = 15.0f;
             Actor_PlaySfx(&this->actor, NA_SE_SY_PIECE_OF_HEART);
             CLEAR_WEEKEVENTREG(WEEKEVENTREG_81_10);
             CLEAR_WEEKEVENTREG(WEEKEVENTREG_81_20);
@@ -920,33 +949,33 @@ void func_80B2A498(EnFish2* this, PlayState* play) {
         }
     }
 
-    if ((this->animIndex == FISH2_ANIM_4) &&
+    if ((this->animIndex == FISH2_ANIM_SPIT_UP) &&
         (Animation_OnFrame(&this->skelAnime, 13.0f) || Animation_OnFrame(&this->skelAnime, 31.0f))) {
         WaterBox* waterBox;
 
-        if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z, &this->unk_334,
-                                 &waterBox)) {
-            Vec3f sp6C;
+        if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
+                                 &this->waterSurface, &waterBox)) {
+            Vec3f splashPos;
             s32 i;
 
             SoundSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 50, NA_SE_EV_BOMB_DROP_WATER);
 
             for (i = 0; i < 10; i++) {
-                Math_Vec3f_Copy(&sp6C, &this->actor.world.pos);
-                sp6C.x += Rand_CenteredFloat(70.0f);
-                sp6C.y = this->unk_334 + 10.0f;
-                sp6C.z += Rand_CenteredFloat(70.0f);
-                EffectSsGSplash_Spawn(play, &sp6C, NULL, NULL, 0, (s32)Rand_CenteredFloat(50.0f) + 350);
+                Math_Vec3f_Copy(&splashPos, &this->actor.world.pos);
+                splashPos.x += Rand_CenteredFloat(70.0f);
+                splashPos.y = this->waterSurface + 10.0f;
+                splashPos.z += Rand_CenteredFloat(70.0f);
+                EffectSsGSplash_Spawn(play, &splashPos, NULL, NULL, 0, (s32)Rand_CenteredFloat(50.0f) + 350);
             }
         }
     }
 
-    if ((curFrame >= this->animEndFrame) && (this->animIndex == FISH2_ANIM_4)) {
+    if ((curFrame >= this->animEndFrame) && (this->animIndex == FISH2_ANIM_SPIT_UP)) {
         D_80B2B2E0 = 0;
         D_80B2B2E4 = 3;
         this->actor.world.pos.x = this->unk_324.x;
         this->actor.world.pos.z = this->unk_324.z;
-        EnFish2_ChangeAnim(this, FISH2_ANIM_0);
+        EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
     }
 }
 
@@ -961,9 +990,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
         SkelAnime_Update(&this->skelAnime);
     }
 
-    if (this->unk_2B8 != 0) {
-        this->unk_2B8--;
-    }
+    DECR(this->unk_2B8);
 
     if (this->unk_2B6 != 0) {
         this->unk_2B6--;
@@ -996,44 +1023,45 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
             sp5C.z += Rand_CenteredFloat(100.0f);
 
             for (i = 0; i < (s32)Rand_CenteredFloat(5.0f) + 10; i++) {
-                EffectSsBubble_Spawn(play, &sp5C, 0, 5.0f, 5.0f, Rand_ZeroFloat(this->unk_330 * 4.0f) + 0.1f);
+                EffectSsBubble_Spawn(play, &sp5C, 0, 5.0f, 5.0f, Rand_ZeroFloat(this->scale * 4.0f) + 0.1f);
             }
         }
 
         func_80B2AF80(this, play);
         Math_Vec3s_Copy(&this->actor.shape.rot, &this->actor.world.rot);
-        Math_Vec3f_Copy(&this->unk_2F4, &this->actor.world.pos);
-        this->unk_2F4.x += (Math_SinS(this->actor.world.rot.y) * 25.0f) - this->unk_330;
-        this->unk_2F4.z += (Math_CosS(this->actor.world.rot.y) * 25.0f) - this->unk_330;
-        this->unk_33C = 25.0f - ((this->unk_330 - 0.01f) * 1000.0f);
-        Actor_SetScale(&this->actor, this->unk_330);
+        Math_Vec3f_Copy(&this->wallCheckPos, &this->actor.world.pos);
+        this->wallCheckPos.x += (Math_SinS(this->actor.world.rot.y) * 25.0f) - this->scale;
+        this->wallCheckPos.z += (Math_CosS(this->actor.world.rot.y) * 25.0f) - this->scale;
+        this->wallCheckRadius = 25.0f - ((this->scale - 0.01f) * 1000.0f);
+        Actor_SetScale(&this->actor, this->scale);
         Actor_MoveWithGravity(&this->actor);
         Actor_UpdateBgCheckInfo(play, &this->actor, 0, 15.0f, 10.0f,
                                 UPDBGCHECKINFO_FLAG_1 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_4);
 
         if (this->actor.params != 2) {
-            this->unk_2D4 = this->actor.floorHeight + (this->unk_330 * 1000.0f);
-            this->unk_2D8 = this->unk_330 * 600.0f;
+            this->unk_2D4 = this->actor.floorHeight + (this->scale * 1000.0f);
+            this->unk_2D8 = this->scale * 600.0f;
             if (this->actor.world.pos.y < this->unk_2D4) {
                 this->actor.world.pos.y = this->unk_2D4 + 0.1f;
             }
 
             if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
-                                     &this->unk_334, &sp6C)) {
-                if ((this->unk_334 != BGCHECK_Y_MIN) && (this->unk_334 - this->unk_2D8 < this->actor.world.pos.y)) {
-                    this->actor.world.pos.y = this->unk_334 - this->unk_2D8;
+                                     &this->waterSurface, &sp6C)) {
+                if ((this->waterSurface != BGCHECK_Y_MIN) &&
+                    (this->waterSurface - this->unk_2D8 < this->actor.world.pos.y)) {
+                    this->actor.world.pos.y = this->waterSurface - this->unk_2D8;
                 }
             }
 
             if (!D_80B2B2E8 && (this->actionFunc == func_80B28C14)) {
-                s32 temp_s0_2 = this->unk_344 * 2;
+                s32 temp_s0_2 = this->index * 2;
                 f32 phi_f2 = 0.0f;
                 f32 phi_f20 = 0;
                 WaterBox* sp4C;
 
                 if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
-                                         &this->unk_334, &sp4C)) {
-                    phi_f20 = D_80B2B3A8[temp_s0_2] + (this->unk_334 - this->unk_2D8);
+                                         &this->waterSurface, &sp4C)) {
+                    phi_f20 = D_80B2B3A8[temp_s0_2] + (this->waterSurface - this->unk_2D8);
                     phi_f2 = D_80B2B3A8[temp_s0_2 + 1] + this->unk_2D4;
                 }
 
@@ -1060,7 +1088,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
 s32 EnFish2_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, Actor* thisx) {
     EnFish2* this = THIS;
 
-    if ((limbIndex == OBJECT_FB_LIMB_14) || (limbIndex == OBJECT_FB_LIMB_15)) {
+    if ((limbIndex == RESEARCH_LAB_FISH_LIMB_RIGHT_EYE) || (limbIndex == RESEARCH_LAB_FISH_LIMB_LEFT_EYE)) {
         *dList = NULL;
     }
 
@@ -1071,7 +1099,7 @@ void EnFish2_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* ro
     EnFish2* this = THIS;
     s32 pad;
 
-    if ((limbIndex == OBJECT_FB_LIMB_14) || (limbIndex == OBJECT_FB_LIMB_15)) {
+    if ((limbIndex == RESEARCH_LAB_FISH_LIMB_RIGHT_EYE) || (limbIndex == RESEARCH_LAB_FISH_LIMB_LEFT_EYE)) {
         OPEN_DISPS(play->state.gfxCtx);
 
         Matrix_Push();
@@ -1085,12 +1113,12 @@ void EnFish2_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* ro
         CLOSE_DISPS(play->state.gfxCtx);
     }
 
-    if (limbIndex == OBJECT_FB_LIMB_0E) {
-        Matrix_MultVec3f(&gZeroVec3f, &this->unk_318);
+    if (limbIndex == RESEARCH_LAB_FISH_LIMB_LOWER_JAW) {
+        Matrix_MultVec3f(&gZeroVec3f, &this->lowerJawPos);
     }
 
-    if (limbIndex == OBJECT_FB_LIMB_11) {
-        Matrix_MultVec3f(&gZeroVec3f, &this->unk_300);
+    if (limbIndex == RESEARCH_LAB_FISH_LIMB_HEAD) {
+        Matrix_MultVec3f(&gZeroVec3f, &this->headPos);
     }
 
     Collider_UpdateSpheres(limbIndex, &this->collider);
@@ -1123,10 +1151,10 @@ void func_80B2ADB0(EnFish2* this, Vec3f* vec, s16 arg2) {
             ptr->unk_20 = (TexturePtr)OS_K0_TO_PHYSICAL(SEGMENTED_TO_K0(texture));
             ptr->unk_00 = true;
             ptr->unk_04 = *vec;
-            ptr->unk_04.x += Rand_CenteredFloat(ptr->unk_00 + (this->unk_330 * 4000.0f));
+            ptr->unk_04.x += Rand_CenteredFloat(ptr->unk_00 + (this->scale * 4000.0f));
             ptr->unk_04.y += Rand_CenteredFloat(20.0f);
-            ptr->unk_04.z += Rand_CenteredFloat(ptr->unk_00 + (this->unk_330 * 4000.0f));
-            ptr->unk_18 = (this->unk_330 * 20.0f) - (Rand_ZeroFloat(5.0f) * 0.01f);
+            ptr->unk_04.z += Rand_CenteredFloat(ptr->unk_00 + (this->scale * 4000.0f));
+            ptr->unk_18 = (this->scale * 20.0f) - (Rand_ZeroFloat(5.0f) * 0.01f);
             ptr->unk_1C = 0x42;
             ptr->unk_10 = arg2;
             break;

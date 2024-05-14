@@ -1,63 +1,76 @@
 ﻿<Root>
+    <!-- Assets for the fish that eats bottled fish and bugs and lives in the tank in the Marine Research Lab. -->
     <File Name="object_fb" Segment="6">
-        <Animation Name="object_fb_Anim_0006D8" Offset="0x6D8" /> <!-- Original name is "fb_eat" -->
-        <Animation Name="object_fb_Anim_0007D4" Offset="0x7D4" /> <!-- Original name is "fb_fastswim" -->
-        <Animation Name="object_fb_Anim_000ACC" Offset="0xACC" /> <!-- Original name is "fb_neweat" -->
-        <Animation Name="object_fb_Anim_001174" Offset="0x1174" /> <!-- Original name is "fb_spitout" -->
-        <Animation Name="object_fb_Anim_0013AC" Offset="0x13AC" /> <!-- Original name is "fb_swim" -->
-        <DList Name="object_fb_DL_002000" Offset="0x2000" />
-        <DList Name="object_fb_DL_002088" Offset="0x2088" />
-        <DList Name="object_fb_DL_002110" Offset="0x2110" />
-        <DList Name="object_fb_DL_0021A8" Offset="0x21A8" />
-        <DList Name="object_fb_DL_002230" Offset="0x2230" />
-        <DList Name="object_fb_DL_002388" Offset="0x2388" />
-        <DList Name="object_fb_DL_002418" Offset="0x2418" />
-        <DList Name="object_fb_DL_0024A8" Offset="0x24A8" />
-        <DList Name="object_fb_DL_0025F8" Offset="0x25F8" />
-        <DList Name="object_fb_DL_002690" Offset="0x2690" />
-        <DList Name="object_fb_DL_002730" Offset="0x2730" />
-        <DList Name="object_fb_DL_0027B8" Offset="0x27B8" />
-        <DList Name="object_fb_DL_002870" Offset="0x2870" />
-        <DList Name="object_fb_DL_002930" Offset="0x2930" />
-        <DList Name="object_fb_DL_0029F0" Offset="0x29F0" />
-        <DList Name="object_fb_DL_002AD8" Offset="0x2AD8" />
-        <DList Name="object_fb_DL_002B98" Offset="0x2B98" />
-        <DList Name="object_fb_DL_002C20" Offset="0x2C20" />
-        <Texture Name="object_fb_Tex_002D20" OutName="tex_002D20" Format="rgba16" Width="32" Height="16" Offset="0x2D20" />
-        <Texture Name="object_fb_Tex_003120" OutName="tex_003120" Format="rgba16" Width="16" Height="32" Offset="0x3120" />
-        <Texture Name="object_fb_Tex_003520" OutName="tex_003520" Format="rgba16" Width="32" Height="16" Offset="0x3520" />
-        <Texture Name="object_fb_Tex_003920" OutName="tex_003920" Format="rgba16" Width="64" Height="32" Offset="0x3920" />
-        <Texture Name="object_fb_Tex_004920" OutName="tex_004920" Format="rgba16" Width="16" Height="16" Offset="0x4920" />
-        <Texture Name="object_fb_Tex_004B20" OutName="tex_004B20" Format="rgba16" Width="32" Height="16" Offset="0x4B20" />
-        <Texture Name="object_fb_Tex_004F20" OutName="tex_004F20" Format="rgba16" Width="8" Height="16" Offset="0x4F20" />
-        <Texture Name="object_fb_Tex_005020" OutName="tex_005020" Format="rgba16" Width="32" Height="32" Offset="0x5020" />
-        <Texture Name="object_fb_Tex_005820" OutName="tex_005820" Format="rgba16" Width="32" Height="32" Offset="0x5820" />
-        <Limb Name="object_fb_Standardlimb_006020" Type="Standard" EnumName="OBJECT_FB_LIMB_01" Offset="0x6020" />
-        <Limb Name="object_fb_Standardlimb_00602C" Type="Standard" EnumName="OBJECT_FB_LIMB_02" Offset="0x602C" />
-        <Limb Name="object_fb_Standardlimb_006038" Type="Standard" EnumName="OBJECT_FB_LIMB_03" Offset="0x6038" />
-        <Limb Name="object_fb_Standardlimb_006044" Type="Standard" EnumName="OBJECT_FB_LIMB_04" Offset="0x6044" />
-        <Limb Name="object_fb_Standardlimb_006050" Type="Standard" EnumName="OBJECT_FB_LIMB_05" Offset="0x6050" />
-        <Limb Name="object_fb_Standardlimb_00605C" Type="Standard" EnumName="OBJECT_FB_LIMB_06" Offset="0x605C" />
-        <Limb Name="object_fb_Standardlimb_006068" Type="Standard" EnumName="OBJECT_FB_LIMB_07" Offset="0x6068" />
-        <Limb Name="object_fb_Standardlimb_006074" Type="Standard" EnumName="OBJECT_FB_LIMB_08" Offset="0x6074" />
-        <Limb Name="object_fb_Standardlimb_006080" Type="Standard" EnumName="OBJECT_FB_LIMB_09" Offset="0x6080" />
-        <Limb Name="object_fb_Standardlimb_00608C" Type="Standard" EnumName="OBJECT_FB_LIMB_0A" Offset="0x608C" />
-        <Limb Name="object_fb_Standardlimb_006098" Type="Standard" EnumName="OBJECT_FB_LIMB_0B" Offset="0x6098" />
-        <Limb Name="object_fb_Standardlimb_0060A4" Type="Standard" EnumName="OBJECT_FB_LIMB_0C" Offset="0x60A4" />
-        <Limb Name="object_fb_Standardlimb_0060B0" Type="Standard" EnumName="OBJECT_FB_LIMB_0D" Offset="0x60B0" />
-        <Limb Name="object_fb_Standardlimb_0060BC" Type="Standard" EnumName="OBJECT_FB_LIMB_0E" Offset="0x60BC" />
-        <Limb Name="object_fb_Standardlimb_0060C8" Type="Standard" EnumName="OBJECT_FB_LIMB_0F" Offset="0x60C8" />
-        <Limb Name="object_fb_Standardlimb_0060D4" Type="Standard" EnumName="OBJECT_FB_LIMB_10" Offset="0x60D4" />
-        <Limb Name="object_fb_Standardlimb_0060E0" Type="Standard" EnumName="OBJECT_FB_LIMB_11" Offset="0x60E0" />
-        <Limb Name="object_fb_Standardlimb_0060EC" Type="Standard" EnumName="OBJECT_FB_LIMB_12" Offset="0x60EC" />
-        <Limb Name="object_fb_Standardlimb_0060F8" Type="Standard" EnumName="OBJECT_FB_LIMB_13" Offset="0x60F8" />
-        <Limb Name="object_fb_Standardlimb_006104" Type="Standard" EnumName="OBJECT_FB_LIMB_14" Offset="0x6104" />
-        <Limb Name="object_fb_Standardlimb_006110" Type="Standard" EnumName="OBJECT_FB_LIMB_15" Offset="0x6110" />
-        <Limb Name="object_fb_Standardlimb_00611C" Type="Standard" EnumName="OBJECT_FB_LIMB_16" Offset="0x611C" />
-        <Limb Name="object_fb_Standardlimb_006128" Type="Standard" EnumName="OBJECT_FB_LIMB_17" Offset="0x6128" />
-        <Skeleton Name="object_fb_Skel_006190" Type="Flex" LimbType="Standard" LimbNone="OBJECT_FB_LIMB_NONE" LimbMax="OBJECT_FB_LIMB_MAX" EnumName="ObjectFbLimb" Offset="0x6190" />
-        <DList Name="object_fb_DL_0061E0" Offset="0x61E0" />
-        <Texture Name="object_fb_Tex_0062A8" OutName="tex_0062A8" Format="i4" Width="32" Height="64" Offset="0x62A8" />
-        <Texture Name="object_fb_Tex_0066A8" OutName="tex_0066A8" Format="i4" Width="64" Height="64" Offset="0x66A8" />
+        <!-- Marine Research Lab Fish Animations -->
+        <Animation Name="gResearchLabFishWindUpAndChompAnim" Offset="0x6D8" /> <!-- Original name is "fb_eat" -->
+        <Animation Name="gResearchLabFishFastSwimAnim" Offset="0x7D4" /> <!-- Original name is "fb_fastswim" -->
+        <Animation Name="gResearchLabFishEatAnim" Offset="0xACC" /> <!-- Original name is "fb_neweat" -->
+        <Animation Name="gResearchLabFishSpitUpAnim" Offset="0x1174" /> <!-- Original name is "fb_spitout" -->
+        <Animation Name="gResearchLabFishSwimAnim" Offset="0x13AC" /> <!-- Original name is "fb_swim" -->
+
+        <!-- Marine Research Lab Fish Limb DisplayLists -->
+        <DList Name="gResearchLabFishRightEyeDL" Offset="0x2000" />
+        <DList Name="gResearchLabFishLeftEyeDL" Offset="0x2088" />
+        <DList Name="gResearchLabFishUpperTeethDL" Offset="0x2110" />
+        <DList Name="gResearchLabFishTopRearFinFrontDL" Offset="0x21A8" />
+        <DList Name="gResearchLabFishHeadDL" Offset="0x2230" />
+        <DList Name="gResearchLabFishRightPectoralFinDL" Offset="0x2388" />
+        <DList Name="gResearchLabFishLeftPectoralFinDL" Offset="0x2418" />
+        <DList Name="gResearchLabFishLowerJawDL" Offset="0x24A8" />
+        <DList Name="gResearchLabFishLowerTeethDL" Offset="0x25F8" />
+        <DList Name="gResearchLabFishBeardDL" Offset="0x2690" />
+        <DList Name="gResearchLabFishTailFinDL" Offset="0x2730" />
+        <DList Name="gResearchLabFishTailDL" Offset="0x27B8" />
+        <DList Name="gResearchLabFishTopRearFinBackDL" Offset="0x2870" />
+        <DList Name="gResearchLabFishBottomRearFinBackDL" Offset="0x2930" />
+        <DList Name="gResearchLabFishBackSegmentDL" Offset="0x29F0" />
+        <DList Name="gResearchLabFishTopRearFinMiddleDL" Offset="0x2AD8" />
+        <DList Name="gResearchLabFishBottomRearFinFrontDL" Offset="0x2B98" />
+        <DList Name="gResearchLabFishMiddleSegmentDL" Offset="0x2C20" />
+
+        <!-- Marine Research Lab Fish Textures -->
+        <Texture Name="gResearchLabFishBodyTex" OutName="research_lab_fish_body" Format="rgba16" Width="32" Height="16" Offset="0x2D20" />
+        <Texture Name="gResearchLabFishTailFinTex" OutName="research_lab_fish_tail_fin" Format="rgba16" Width="16" Height="32" Offset="0x3120" />
+        <Texture Name="gResearchLabFishBottomRearFinTex" OutName="research_lab_fish_bottom_rear_fin" Format="rgba16" Width="32" Height="16" Offset="0x3520" />
+        <Texture Name="gResearchLabFishTopRearFinTex" OutName="research_lab_fish_top_rear_fin" Format="rgba16" Width="64" Height="32" Offset="0x3920" />
+        <Texture Name="gResearchLabFishLipTex" OutName="research_lab_fish_lip" Format="rgba16" Width="16" Height="16" Offset="0x4920" />
+        <Texture Name="gResearchLabFishBeardTex" OutName="research_lab_fish_beard" Format="rgba16" Width="32" Height="16" Offset="0x4B20" />
+        <Texture Name="gResearchLabFishToothTex" OutName="research_lab_fish_tooth" Format="rgba16" Width="8" Height="16" Offset="0x4F20" />
+        <Texture Name="gResearchLabFishEyeTex" OutName="research_lab_fish_eye" Format="rgba16" Width="32" Height="32" Offset="0x5020" />
+        <Texture Name="gResearchLabFishPectoralFinTex" OutName="research_lab_fish_pectoral_fin" Format="rgba16" Width="32" Height="32" Offset="0x5820" />
+
+        <!-- Marine Research Lab Fish Limbs -->
+        <Limb Name="gResearchLabFishRootLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_ROOT" Offset="0x6020" />
+        <Limb Name="gResearchLabFishMiddleSegmentRootLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_MIDDLE_SEGMENT_ROOT" Offset="0x602C" />
+        <Limb Name="gResearchLabFishBackSegmentRootLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_BACK_SEGMENT_ROOT" Offset="0x6038" />
+        <Limb Name="gResearchLabFishTailRootLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_TAIL_ROOT" Offset="0x6044" />
+        <Limb Name="gResearchLabFishTailLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_TAIL" Offset="0x6050" />
+        <Limb Name="gResearchLabFishTailFinLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_TAIL_FIN" Offset="0x605C" />
+        <Limb Name="gResearchLabFishBackSegmentLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_BACK_SEGMENT" Offset="0x6068" />
+        <Limb Name="gResearchLabFishBottomRearFinBackLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_BOTTOM_REAR_FIN_BACK" Offset="0x6074" />
+        <Limb Name="gResearchLabFishTopRearFinBackLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_TOP_REAR_FIN_BACK" Offset="0x6080" />
+        <Limb Name="gResearchLabFishMiddleSegmentLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_MIDDLE_SEGMENT" Offset="0x608C" />
+        <Limb Name="gResearchLabFishBottomRearFinFrontLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_BOTTOM_REAR_FIN_FRONT" Offset="0x6098" />
+        <Limb Name="gResearchLabFishTopRearFinMiddleLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_TOP_REAR_FIN_MIDDLE" Offset="0x60A4" />
+        <Limb Name="gResearchLabFishLowerJawRootLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_LOWER_JAW_ROOT" Offset="0x60B0" />
+        <Limb Name="gResearchLabFishLowerJawLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_LOWER_JAW" Offset="0x60BC" />
+        <Limb Name="gResearchLabFishBeardLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_BEARD" Offset="0x60C8" />
+        <Limb Name="gResearchLabFishLowerTeethLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_LOWER_TEETH" Offset="0x60D4" />
+        <Limb Name="gResearchLabFishHeadLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_HEAD" Offset="0x60E0" />
+        <Limb Name="gResearchLabFishUpperTeethLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_UPPER_TEETH" Offset="0x60EC" />
+        <Limb Name="gResearchLabFishTopRearFinFrontLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_TOP_REAR_FIN_FRONT" Offset="0x60F8" />
+        <Limb Name="gResearchLabFishRightEyeLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_RIGHT_EYE" Offset="0x6104" />
+        <Limb Name="gResearchLabFishLeftEyeLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_LEFT_EYE" Offset="0x6110" />
+        <Limb Name="gResearchLabFishRightPectoralFinLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_RIGHT_PECTORAL_FIN" Offset="0x611C" />
+        <Limb Name="gResearchLabFishLeftPectoralFinLimb" Type="Standard" EnumName="RESEARCH_LAB_FISH_LIMB_LEFT_PECTORAL_FIN" Offset="0x6128" />
+
+        <!-- Marine Research Lab Fish Skeleton -->
+        <Skeleton Name="gResearchLabFishSkel" Type="Flex" LimbType="Standard" LimbNone="RESEARCH_LAB_FISH_LIMB_NONE" LimbMax="RESEARCH_LAB_FISH_LIMB_MAX" EnumName="ResearchLabFishLimb" Offset="0x6190" />
+
+        <!-- Unused DisplayLists and Textures to display some kind of vortex. -->
+        <!-- Specifically, the textures here are identical to the textures used for the vortex that trails behind the older Beaver Brother as he swims (see `object_az`). -->
+        <DList Name="gResearchLabFishUnusedVortexDL" Offset="0x61E0" />
+        <Texture Name="gResearchLabFishUnusedVortexMaskTex" OutName="research_lab_fish_unused_vortex_mask" Format="i4" Width="32" Height="64" Offset="0x62A8" />
+        <Texture Name="gResearchLabFishUnusedVortexTex" OutName="research_lab_fish_unused_vortex" Format="i4" Width="64" Height="64" Offset="0x66A8" />
     </File>
 </Root>

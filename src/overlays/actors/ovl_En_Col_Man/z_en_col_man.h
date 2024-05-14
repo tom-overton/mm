@@ -17,11 +17,11 @@ typedef struct EnColMan {
 } EnColMan; /* size = 0x1A0 */
 
 typedef enum {
-    /* 0 */ EN_COL_MAN_HEART_PIECE,
-    /* 1 */ EN_COL_MAN_RECOVERY_HEART,
-    /* 2 */ EN_COL_MAN_FALLING_ROCK,
-    /* 3 */ EN_COL_MAN_CUTSCENE_BOMB,
-    /* 4 */ EN_COL_MAN_GAMEPLAY_BOMB
+    /* 0 */ EN_COL_MAN_TYPE_HEART_PIECE,
+    /* 1 */ EN_COL_MAN_TYPE_RECOVERY_HEART,
+    /* 2 */ EN_COL_MAN_TYPE_FALLING_ROCK,
+    /* 3 */ EN_COL_MAN_TYPE_CUTSCENE_BOMB,
+    /* 4 */ EN_COL_MAN_TYPE_GAMEPLAY_BOMB
 } EnColManType;
 
 #endif // Z_EN_COL_MAN_H

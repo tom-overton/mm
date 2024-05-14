@@ -68,20 +68,20 @@ void EnColMan_Init(Actor* thisx, PlayState* play) {
     this->scale = (BREG(55) / 1000.0f) + 0.01f;
 
     switch (this->actor.params) {
-        case EN_COL_MAN_HEART_PIECE:
-        case EN_COL_MAN_RECOVERY_HEART:
+        case EN_COL_MAN_TYPE_HEART_PIECE:
+        case EN_COL_MAN_TYPE_RECOVERY_HEART:
         default:
             ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 10.0f);
             func_80AFDD60(this);
             break;
 
-        case EN_COL_MAN_FALLING_ROCK:
+        case EN_COL_MAN_TYPE_FALLING_ROCK:
             ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 10.0f);
             func_80AFDF60(this);
             break;
 
-        case EN_COL_MAN_CUTSCENE_BOMB:
-        case EN_COL_MAN_GAMEPLAY_BOMB:
+        case EN_COL_MAN_TYPE_CUTSCENE_BOMB:
+        case EN_COL_MAN_TYPE_GAMEPLAY_BOMB:
             func_80AFE234(this);
             break;
     }
@@ -97,26 +97,26 @@ void func_80AFDD60(EnColMan* this) {
     if (!CHECK_WEEKEVENTREG(WEEKEVENTREG_RECEIVED_MARINE_RESEARCH_LAB_FISH_HEART_PIECE)) {
         this->actor.draw = func_80AFE414;
         this->actor.shape.yOffset = 700.0f;
-        if (this->actor.params == EN_COL_MAN_HEART_PIECE) {
+        if (this->actor.params == EN_COL_MAN_TYPE_HEART_PIECE) {
             this->actor.gravity = -2.0f;
         }
-        this->type = EN_COL_MAN_HEART_PIECE;
+        this->type = EN_COL_MAN_TYPE_HEART_PIECE;
     } else {
         this->actor.draw = func_80AFE4AC;
         this->actor.shape.yOffset = 300.0f;
         this->actor.shape.shadowScale = 5.0f;
-        if (this->actor.params == EN_COL_MAN_HEART_PIECE) {
+        if (this->actor.params == EN_COL_MAN_TYPE_HEART_PIECE) {
             this->actor.gravity = -2.0f;
         }
-        this->type = EN_COL_MAN_RECOVERY_HEART;
+        this->type = EN_COL_MAN_TYPE_RECOVERY_HEART;
     }
     this->actionFunc = func_80AFDE00;
 }
 
 void func_80AFDE00(EnColMan* this, PlayState* play) {
     if (this->actor.bgCheckFlags & BGCHECKFLAG_GROUND) {
-        if (this->actor.params == EN_COL_MAN_HEART_PIECE) {
-            this->actor.params = EN_COL_MAN_RECOVERY_HEART;
+        if (this->actor.params == EN_COL_MAN_TYPE_HEART_PIECE) {
+            this->actor.params = EN_COL_MAN_TYPE_RECOVERY_HEART;
             this->actor.speed = 2.0f;
             this->actor.velocity.y = 8.0f;
         } else {
@@ -148,7 +148,7 @@ void func_80AFDF60(EnColMan* this) {
     this->actor.draw = func_80AFE584;
     this->actor.flags |= ACTOR_FLAG_10;
     this->actor.flags |= ACTOR_FLAG_20;
-    this->type = EN_COL_MAN_FALLING_ROCK;
+    this->type = EN_COL_MAN_TYPE_FALLING_ROCK;
     this->actionFunc = func_80AFDFB4;
     this->actor.shape.shadowScale = 5.0f;
     this->actor.gravity = -3.0f;
@@ -191,7 +191,7 @@ void func_80AFDFB4(EnColMan* this, PlayState* play) {
 
 void func_80AFE234(EnColMan* this) {
     this->actor.draw = func_80AFE650;
-    this->type = EN_COL_MAN_CUTSCENE_BOMB;
+    this->type = EN_COL_MAN_TYPE_CUTSCENE_BOMB;
     this->actionFunc = func_80AFE25C;
 }
 
@@ -199,7 +199,7 @@ void func_80AFE25C(EnColMan* this, PlayState* play) {
     this->scale = BREG(55) * 0.01f + 0.05f;
 
     if (BREG(60) || (this->actor.world.rot.z != 0)) {
-        if (this->actor.params == EN_COL_MAN_CUTSCENE_BOMB) {
+        if (this->actor.params == EN_COL_MAN_TYPE_CUTSCENE_BOMB) {
             Actor_Spawn(&play->actorCtx, play, ACTOR_EN_CLEAR_TAG, this->actor.parent->world.pos.x,
                         this->actor.parent->world.pos.y, this->actor.parent->world.pos.z, 0, 0, 0,
                         CLEAR_TAG_PARAMS(CLEAR_TAG_SMALL_EXPLOSION));

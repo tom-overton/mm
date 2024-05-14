@@ -21,8 +21,8 @@ typedef struct {
 typedef struct EnFish2 {
     /* 0x000 */ Actor actor;
     /* 0x144 */ SkelAnime skelAnime;
-    /* 0x188 */ Vec3s jointTable[OBJECT_FB_LIMB_MAX];
-    /* 0x218 */ Vec3s morphTable[OBJECT_FB_LIMB_MAX];
+    /* 0x188 */ Vec3s jointTable[RESEARCH_LAB_FISH_LIMB_MAX];
+    /* 0x218 */ Vec3s morphTable[RESEARCH_LAB_FISH_LIMB_MAX];
     /* 0x2A8 */ EnFish2ActionFunc actionFunc;
     /* 0x2AC */ s32 animIndex;
     /* 0x2B0 */ s32 unk_2B0;
@@ -30,7 +30,7 @@ typedef struct EnFish2 {
     /* 0x2B6 */ s16 unk_2B6;
     /* 0x2B8 */ s16 unk_2B8;
     /* 0x2BA */ s16 csIdList[3];
-    /* 0x2C0 */ s32 unk_2C0;
+    /* 0x2C0 */ s32 scaleIndex;
     /* 0x2C4 */ s32 unk_2C4;
     /* 0x2C8 */ u8 unk_2C8;
     /* 0x2CA */ s16 subCamId;
@@ -40,17 +40,17 @@ typedef struct EnFish2 {
     /* 0x2D8 */ f32 unk_2D8;
     /* 0x2DC */ Vec3f subCamEye;
     /* 0x2E8 */ Vec3f subCamAt;
-    /* 0x2F4 */ Vec3f unk_2F4;
-    /* 0x300 */ Vec3f unk_300;
+    /* 0x2F4 */ Vec3f wallCheckPos;
+    /* 0x300 */ Vec3f headPos;
     /* 0x30C */ Vec3f unk_30C;
-    /* 0x318 */ Vec3f unk_318;
+    /* 0x318 */ Vec3f lowerJawPos;
     /* 0x324 */ Vec3f unk_324;
-    /* 0x330 */ f32 unk_330;
-    /* 0x334 */ f32 unk_334;
+    /* 0x330 */ f32 scale;
+    /* 0x334 */ f32 waterSurface;
     /* 0x338 */ f32 unk_338;
-    /* 0x33C */ f32 unk_33C;
+    /* 0x33C */ f32 wallCheckRadius;
     /* 0x340 */ s32 unk_340;
-    /* 0x344 */ s32 unk_344;
+    /* 0x344 */ s32 index;
     /* 0x348 */ s16 unk_348;
     /* 0x34A */ s16 unk_34A;
     /* 0x34C */ s16 unk_34C;
