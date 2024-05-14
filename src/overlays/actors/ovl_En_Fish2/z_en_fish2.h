@@ -8,15 +8,17 @@ struct EnFish2;
 
 typedef void (*EnFish2ActionFunc)(struct EnFish2*, PlayState*);
 
-typedef struct {
-    /* 0x00 */ u8 unk_00;
-    /* 0x04 */ Vec3f unk_04;
-    /* 0x10 */ s16 unk_10;
-    /* 0x14 */ f32 unk_14;
-    /* 0x18 */ f32 unk_18;
-    /* 0x1C */ s16 unk_1C;
-    /* 0x20 */ TexturePtr unk_20;
-} EnFish2UnkStruct; // size = 0x24
+typedef struct EnFish2Effect {
+    /* 0x00 */ u8 isEnabled;
+    /* 0x04 */ Vec3f pos;
+    /* 0x10 */ s16 timer;
+    /* 0x14 */ f32 scale;
+    /* 0x18 */ f32 targetScale;
+    /* 0x1C */ s16 unk_1C; // always 66 in the final game; if it is set to 0, the effect is immediately disabled
+    /* 0x20 */ TexturePtr texture;
+} EnFish2Effect; // size = 0x24
+
+#define ENFISH2_EFFECT_COUNT 200
 
 typedef struct EnFish2 {
     /* 0x000 */ Actor actor;
@@ -58,7 +60,7 @@ typedef struct EnFish2 {
     /* 0x354 */ struct EnFish2* unk_354;
     /* 0x358 */ ColliderJntSph collider;
     /* 0x378 */ ColliderJntSphElement colliderElements[2];
-    /* 0x3F8 */ EnFish2UnkStruct unk_3F8[200];
+    /* 0x3F8 */ EnFish2Effect effects[ENFISH2_EFFECT_COUNT];
 } EnFish2; // size = 0x2018
 
 #endif // Z_EN_FISH2_H

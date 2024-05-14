@@ -39,9 +39,9 @@ void func_80B2A094(EnFish2* this, PlayState* play);
 void func_80B2A23C(EnFish2* this, PlayState* play);
 void EnFish2_SetupSpitUpReward(EnFish2* this);
 void EnFish2_SpitUpReward(EnFish2* this, PlayState* play);
-void func_80B2ADB0(EnFish2* this, Vec3f* vec, s16 arg2);
-void func_80B2AF80(EnFish2* this, PlayState* play);
-void func_80B2B180(EnFish2* this, PlayState* play);
+void EnFish2_AddEffect(EnFish2* this, Vec3f* pos, s16 timer);
+void EnFish2_UpdateEffects(EnFish2* this, PlayState* play);
+void EnFish2_DrawEffects(EnFish2* this, PlayState* play);
 
 static s32 D_80B2B2E0 = 0;
 static s32 D_80B2B2E4 = 0;
@@ -701,15 +701,15 @@ void func_80B297FC(EnFish2* this, PlayState* play) {
             Math_ApproachF(&this->scale, sScales[this->scaleIndex] * phi_f0, 0.3f, 0.004f);
 
             if (this->unk_2B6 == 0) {
-                Vec3f sp3C;
+                Vec3f effectPos;
                 s32 i;
-                s32 pad2;
+                s32 pad;
 
-                Math_Vec3f_Copy(&sp3C, &this->actor.world.pos);
-                sp3C.y += -10.0f;
+                Math_Vec3f_Copy(&effectPos, &this->actor.world.pos);
+                effectPos.y += -10.0f;
 
                 for (i = 0; i < 30; i++) {
-                    func_80B2ADB0(this, &sp3C, 0x46);
+                    EnFish2_AddEffect(this, &effectPos, 70);
                 }
 
                 this->unk_2C4++;
@@ -875,7 +875,7 @@ void func_80B2A094(EnFish2* this, PlayState* play) {
     if ((this->unk_350 == NULL) || (this->unk_350->update == NULL)) {
         this->unk_350 = NULL;
         this->unk_2B0++;
-        
+
         if (this->unk_2B0 > 10) {
             this->unk_2B4 = 20;
             this->actionFunc = func_80B2A23C;
@@ -1027,7 +1027,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
             }
         }
 
-        func_80B2AF80(this, play);
+        EnFish2_UpdateEffects(this, play);
         Math_Vec3s_Copy(&this->actor.shape.rot, &this->actor.world.rot);
         Math_Vec3f_Copy(&this->wallCheckPos, &this->actor.world.pos);
         this->wallCheckPos.x += (Math_SinS(this->actor.world.rot.y) * 25.0f) - this->scale;
@@ -1131,15 +1131,15 @@ void EnFish2_Draw(Actor* thisx, PlayState* play) {
     Gfx_SetupDL25_Xlu(play->state.gfxCtx);
     SkelAnime_DrawFlexOpa(play, this->skelAnime.skeleton, this->skelAnime.jointTable, this->skelAnime.dListCount,
                           EnFish2_OverrideLimbDraw, EnFish2_PostLimbDraw, &this->actor);
-    func_80B2B180(this, play);
+    EnFish2_DrawEffects(this, play);
 }
 
-void func_80B2ADB0(EnFish2* this, Vec3f* vec, s16 arg2) {
+void EnFish2_AddEffect(EnFish2* this, Vec3f* pos, s16 timer) {
     s16 i;
-    EnFish2UnkStruct* ptr = &this->unk_3F8[0];
+    EnFish2Effect* effect = &this->effects[0];
 
-    for (i = 0; i < ARRAY_COUNT(this->unk_3F8); i++, ptr++) {
-        if (!ptr->unk_00) {
+    for (i = 0; i < ARRAY_COUNT(this->effects); i++, effect++) {
+        if (!effect->isEnabled) {
             TexturePtr texture;
 
             if (Rand_ZeroOne() < 0.5f) {
@@ -1148,75 +1148,77 @@ void func_80B2ADB0(EnFish2* this, Vec3f* vec, s16 arg2) {
                 texture = gEffBubble1Tex;
             }
 
-            ptr->unk_20 = (TexturePtr)OS_K0_TO_PHYSICAL(SEGMENTED_TO_K0(texture));
-            ptr->unk_00 = true;
-            ptr->unk_04 = *vec;
-            ptr->unk_04.x += Rand_CenteredFloat(ptr->unk_00 + (this->scale * 4000.0f));
-            ptr->unk_04.y += Rand_CenteredFloat(20.0f);
-            ptr->unk_04.z += Rand_CenteredFloat(ptr->unk_00 + (this->scale * 4000.0f));
-            ptr->unk_18 = (this->scale * 20.0f) - (Rand_ZeroFloat(5.0f) * 0.01f);
-            ptr->unk_1C = 0x42;
-            ptr->unk_10 = arg2;
+            effect->texture = (TexturePtr)OS_K0_TO_PHYSICAL(SEGMENTED_TO_K0(texture));
+            effect->isEnabled = true;
+            effect->pos = *pos;
+            effect->pos.x += Rand_CenteredFloat(effect->isEnabled + (this->scale * 4000.0f));
+            effect->pos.y += Rand_CenteredFloat(20.0f);
+            effect->pos.z += Rand_CenteredFloat(effect->isEnabled + (this->scale * 4000.0f));
+            effect->targetScale = (this->scale * 20.0f) - (Rand_ZeroFloat(5.0f) * 0.01f);
+            effect->unk_1C = 66;
+            effect->timer = timer;
             break;
         }
     }
 }
 
-void func_80B2AF80(EnFish2* this, PlayState* play) {
-    EnFish2UnkStruct* ptr = &this->unk_3F8[0];
+void EnFish2_UpdateEffects(EnFish2* this, PlayState* play) {
+    EnFish2Effect* effect = &this->effects[0];
     WaterBox* waterBox;
-    f32 sp8C;
+    f32 waterSurface;
     s32 i;
 
-    for (i = 0; i < ARRAY_COUNT(this->unk_3F8); i++, ptr++) {
-        if (ptr->unk_00) {
-            if ((ptr->unk_10 != 0) && (ptr->unk_1C != 0)) {
-                Math_ApproachF(&ptr->unk_14, ptr->unk_18, 0.4f, 0.5f);
-                ptr->unk_10--;
+    for (i = 0; i < ARRAY_COUNT(this->effects); i++, effect++) {
+        if (effect->isEnabled) {
+            if ((effect->timer != 0) && (effect->unk_1C != 0)) {
+                Math_ApproachF(&effect->scale, effect->targetScale, 0.4f, 0.5f);
+                effect->timer--;
             } else {
-                ptr->unk_00 = 0;
+                effect->isEnabled = false;
             }
 
-            if (ptr->unk_00) {
-                ptr->unk_04.x += (0.3f + (Rand_ZeroOne() * 0.5f)) - 0.55f;
-                ptr->unk_04.y += 1.0f + ((Rand_ZeroOne() - 0.3f) * 1.2f);
-                ptr->unk_04.z += (0.3f + (Rand_ZeroOne() * 0.5f)) - 0.55f;
-                sp8C = ptr->unk_04.y;
-                if (!WaterBox_GetSurface1(play, &play->colCtx, ptr->unk_04.x, ptr->unk_04.z, &sp8C, &waterBox)) {
-                    ptr->unk_00 = 0;
-                } else if (sp8C < ptr->unk_04.y) {
-                    Vec3f sp7C;
+            if (effect->isEnabled) {
+                effect->pos.x += (0.3f + (Rand_ZeroOne() * 0.5f)) - 0.55f;
+                effect->pos.y += 1.0f + ((Rand_ZeroOne() - 0.3f) * 1.2f);
+                effect->pos.z += (0.3f + (Rand_ZeroOne() * 0.5f)) - 0.55f;
+                waterSurface = effect->pos.y;
 
-                    sp7C.x = ptr->unk_04.x;
-                    sp7C.y = sp8C;
-                    sp7C.z = ptr->unk_04.z;
-                    EffectSsGRipple_Spawn(play, &sp7C, 0, 80, 0);
-                    ptr->unk_00 = 0;
+                if (!WaterBox_GetSurface1(play, &play->colCtx, effect->pos.x, effect->pos.z, &waterSurface,
+                                          &waterBox)) {
+                    effect->isEnabled = false;
+                } else if (waterSurface < effect->pos.y) {
+                    Vec3f ripplePos;
+
+                    ripplePos.x = effect->pos.x;
+                    ripplePos.y = waterSurface;
+                    ripplePos.z = effect->pos.z;
+                    EffectSsGRipple_Spawn(play, &ripplePos, 0, 80, 0);
+                    effect->isEnabled = false;
                 }
             }
         }
     }
 }
 
-void func_80B2B180(EnFish2* this, PlayState* play) {
+void EnFish2_DrawEffects(EnFish2* this, PlayState* play) {
     s16 i;
-    EnFish2UnkStruct* ptr;
+    EnFish2Effect* effect;
     GraphicsContext* gfxCtx = play->state.gfxCtx;
 
     OPEN_DISPS(gfxCtx);
 
-    ptr = &this->unk_3F8[0];
+    effect = &this->effects[0];
     Gfx_SetupDL25_Opa(gfxCtx);
 
-    for (i = 0; i < ARRAY_COUNT(this->unk_3F8); i++, ptr++) {
-        if (ptr->unk_00) {
-            Matrix_Translate(ptr->unk_04.x, ptr->unk_04.y, ptr->unk_04.z, MTXMODE_NEW);
-            Matrix_Scale(ptr->unk_14, ptr->unk_14, ptr->unk_14, MTXMODE_APPLY);
+    for (i = 0; i < ARRAY_COUNT(this->effects); i++, effect++) {
+        if (effect->isEnabled) {
+            Matrix_Translate(effect->pos.x, effect->pos.y, effect->pos.z, MTXMODE_NEW);
+            Matrix_Scale(effect->scale, effect->scale, effect->scale, MTXMODE_APPLY);
 
             MATRIX_FINALIZE_AND_LOAD(POLY_OPA_DISP++, gfxCtx);
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
             gDPSetEnvColor(POLY_OPA_DISP++, 150, 150, 150, 0);
-            gSPSegment(POLY_OPA_DISP++, 0x08, ptr->unk_20);
+            gSPSegment(POLY_OPA_DISP++, 0x08, effect->texture);
             gSPDisplayList(POLY_OPA_DISP++, gEffBubbleDL);
         }
     }
