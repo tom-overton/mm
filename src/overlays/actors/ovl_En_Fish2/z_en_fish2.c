@@ -45,7 +45,7 @@ void EnFish2_DrawEffects(EnFish2* this, PlayState* play);
 
 static s32 D_80B2B2E0 = 0;
 static s32 D_80B2B2E4 = 0;
-static s32 D_80B2B2E8 = false;
+static s32 sIsOneLabFishChasingTheOther = false;
 static s32 D_80B2B2EC = 0;
 static s32 sCurrentIndex = 0;
 static Actor* D_80B2B2F4 = NULL;
@@ -153,7 +153,7 @@ s32 func_80B28478(EnFish2* this) {
     if (!this->wasFedBugs) {
         if ((D_80B2B2E4 != 0) &&
             ((D_80B2B2E0 != 1) || (this->targetActor == NULL) || (this->targetActor->update == NULL)) &&
-            (this->unk_2B0 == 0)) {
+            !this->isChasingOtherLabFish) {
             this->unk_2B4 = 0;
             this->unk_2C4 = 0;
             this->unk_2B6 = this->unk_2B4;
@@ -176,7 +176,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
     s32 i;
     s32 csId;
 
-    Math_Vec3f_Copy(&this->unk_324, &this->actor.home.pos);
+    Math_Vec3f_Copy(&this->targetPos, &this->actor.home.pos);
     this->index = sCurrentIndex;
     sCurrentIndex++;
 
@@ -321,7 +321,7 @@ void EnFish2_UpdateVelocityY(EnFish2* this, PlayState* play) {
 
     if (this->targetRotX != 0) {
         if (this->targetRotX > 0) {
-            if (this->unk_2D4 < this->actor.world.pos.y) {
+            if (this->minDistFromFloor < this->actor.world.pos.y) {
                 this->actor.velocity.y = this->actor.world.rot.x * 0.001f * -0.1f;
 
                 if (this->actionFunc == EnFish2_ScaleUp) {
@@ -335,7 +335,7 @@ void EnFish2_UpdateVelocityY(EnFish2* this, PlayState* play) {
         } else if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
                                         &this->waterSurface, &waterBox)) {
             if ((this->waterSurface != BGCHECK_Y_MIN) &&
-                (this->actor.world.pos.y < (this->waterSurface - this->unk_2D8))) {
+                (this->actor.world.pos.y < (this->waterSurface - this->minDistFromWaterSurface))) {
                 this->actor.velocity.y = this->actor.world.rot.x * 0.001f * -0.1f;
 
                 if (this->actionFunc == EnFish2_ScaleUp) {
@@ -380,7 +380,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
 
     if ((this->wallCheckTimer == 0) && (fabsf(this->actor.world.rot.y - this->targetRotY) < 100.0f)) {
         if (EnFish2_IsTouchingWall(this, play)) {
-            if (this->unk_340 == 0) {
+            if (this->direction == 0) {
                 this->targetRotY += 0x4000;
             } else {
                 this->targetRotY -= 0x4000;
@@ -399,7 +399,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
             if ((this->targetRotX == 0) || (Rand_ZeroOne() < 0.6f)) {
                 this->targetRotX = Rand_CenteredFloat(0x2000);
             } else {
-                this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &this->unk_324);
+                this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &this->targetPos);
                 if (this->targetRotX < -0x1000) {
                     this->targetRotX = -0x1000;
                 }
@@ -433,7 +433,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
         Math_ApproachZeroF(&this->actor.speed, 0.3f, 0.3f);
     }
 
-    if (!D_80B2B2E8 && (D_80B2B2E0 != 2)) {
+    if (!sIsOneLabFishChasingTheOther && (D_80B2B2E0 != 2)) {
         while (itemAction != NULL) {
             if ((itemAction->id != ACTOR_EN_FISH) && (itemAction->id != ACTOR_EN_MUSHI2)) {
                 itemAction = itemAction->next;
@@ -457,9 +457,9 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
                     EnFish2* cutsceneHandler;
 
                     this->cutsceneHandler = NULL;
-                    cutsceneHandler =
-                        (EnFish2*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_FISH2,
-                                                     this->unk_324.x, this->unk_324.y, this->unk_324.z, 0, 0, 0, 1);
+                    cutsceneHandler = (EnFish2*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_FISH2,
+                                                                   this->targetPos.x, this->targetPos.y,
+                                                                   this->targetPos.z, 0, 0, 0, 1);
                     this->cutsceneHandler = cutsceneHandler;
 
                     if (this->cutsceneHandler != NULL) {
@@ -503,12 +503,12 @@ void EnFish2_SetupChaseDroppedPrey(EnFish2* this) {
 
     if (!this->wasFedBugs) {
         this->angularVelocityModX = 0x190;
-        Math_Vec3f_Copy(&this->actor.world.pos, &this->unk_324);
+        Math_Vec3f_Copy(&this->actor.world.pos, &this->targetPos);
         this->actor.world.pos.y = this->actor.floorHeight + (this->scale * 1200.0f);
     }
 
     this->targetRotY = 0;
-    this->unk_340 = (s32)Rand_ZeroOne() & 1;
+    this->direction = (s32)Rand_ZeroOne() & 1;
     EnFish2_ChangeAnim(this, FISH2_ANIM_FAST_SWIM);
     this->actionFunc = EnFish2_ChaseDroppedPrey;
 }
@@ -565,7 +565,7 @@ void EnFish2_Bite(EnFish2* this, PlayState* play) {
         if (curFrame >= this->animEndFrame) {
             EnFish2_ChangeAnim(this, FISH2_ANIM_FAST_SWIM);
 
-            if (this->unk_2B0 == 0) {
+            if (!this->isChasingOtherLabFish) {
                 this->actionFunc = EnFish2_ChaseDroppedPrey;
             } else {
                 this->actionFunc = EnFish2_ChaseOtherLabFish;
@@ -633,16 +633,16 @@ void EnFish2_Swallow(EnFish2* this, PlayState* play) {
 void EnFish2_SetupScaleUp(EnFish2* this) {
     EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
     this->unk_2B4 = 0;
-    this->unk_2C4 = 0;
+    this->scaleUpState = 0;
     this->unk_2B6 = this->unk_2B4;
 
-    if (this->unk_2B0 != 0) {
-        this->unk_324.x = this->actor.home.pos.x - 14.0f;
-        this->unk_324.z = this->actor.home.pos.z - 18.0f;
+    if (this->isChasingOtherLabFish) {
+        this->targetPos.x = this->actor.home.pos.x - 14.0f;
+        this->targetPos.z = this->actor.home.pos.z - 18.0f;
     }
 
     this->actionFunc = EnFish2_ScaleUp;
-    this->unk_324.y = this->unk_2D4;
+    this->targetPos.y = this->minDistFromFloor;
     this->actor.speed = 0.0f;
 }
 
@@ -650,10 +650,10 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
     f32 scaleMultiplier = 0.0f;
     Vec3f sp48;
 
-    switch (this->unk_2C4) {
+    switch (this->scaleUpState) {
         case 0:
-            Math_Vec3f_Copy(&sp48, &this->unk_324);
-            sp48.y = this->unk_2D4;
+            Math_Vec3f_Copy(&sp48, &this->targetPos);
+            sp48.y = this->minDistFromFloor;
             this->targetRotX = Math_Vec3f_Pitch(&this->actor.world.pos, &sp48);
 
             if (this->targetRotX < -0x2000) {
@@ -664,18 +664,18 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                 this->targetRotX = 0x2000;
             }
 
-            this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &this->unk_324);
+            this->targetRotY = Math_Vec3f_Yaw(&this->actor.world.pos, &this->targetPos);
             EnFish2_UpdateVelocityY(this, play);
-            Math_ApproachF(&this->actor.world.pos.x, this->unk_324.x, 0.3f, 3.0f);
-            Math_ApproachF(&this->actor.world.pos.y, this->unk_2D4, 0.3f, 3.0f);
-            Math_ApproachF(&this->actor.world.pos.z, this->unk_324.z, 0.3f, 3.0f);
+            Math_ApproachF(&this->actor.world.pos.x, this->targetPos.x, 0.3f, 3.0f);
+            Math_ApproachF(&this->actor.world.pos.y, this->minDistFromFloor, 0.3f, 3.0f);
+            Math_ApproachF(&this->actor.world.pos.z, this->targetPos.z, 0.3f, 3.0f);
 
-            if ((fabsf(this->actor.world.pos.x - this->unk_324.x) < 2.0f) &&
-                (this->actor.world.pos.y < (this->unk_2D4 + 3.0f)) &&
-                (fabsf(this->actor.world.pos.z - this->unk_324.z) < 2.0f)) {
+            if ((fabsf(this->actor.world.pos.x - this->targetPos.x) < 2.0f) &&
+                (this->actor.world.pos.y < (this->minDistFromFloor + 3.0f)) &&
+                (fabsf(this->actor.world.pos.z - this->targetPos.z) < 2.0f)) {
                 this->actor.speed = 0.0f;
                 this->targetRotY = BINANG_ROT180(this->actor.home.rot.y);
-                this->unk_2C4++;
+                this->scaleUpState++;
                 this->actor.velocity.y = 0.0f;
                 this->actor.gravity = 0.0f;
             }
@@ -704,13 +704,13 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                     SET_WEEKEVENTREG(WEEKEVENTREG_82_02);
                 }
 
-                if (this->unk_2B0 != 0) {
+                if (this->isChasingOtherLabFish) {
                     this->scaleIndex = 5;
                 }
 
                 this->unk_2B6 = 4;
                 Actor_PlaySfx(&this->actor, NA_SE_EV_FISH_GROW_UP);
-                this->unk_2C4++;
+                this->scaleUpState++;
             }
             break;
 
@@ -741,7 +741,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                     EnFish2_AddEffect(this, &effectPos, 70);
                 }
 
-                this->unk_2C4++;
+                this->scaleUpState++;
                 this->unk_2B6 = 2;
             }
             break;
@@ -763,7 +763,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
 
             if (this->unk_2B6 == 0) {
                 this->unk_2B6 = 2;
-                this->unk_2C4++;
+                this->scaleUpState++;
             }
             break;
 
@@ -771,7 +771,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
             Math_ApproachF(&this->scale, sScales[this->scaleIndex], 0.3f, 0.004f);
             if (this->unk_2B6 == 0) {
                 this->unk_2B6 = 30;
-                this->unk_2C4++;
+                this->scaleUpState++;
             }
             break;
 
@@ -779,9 +779,9 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
             if (this->unk_2B6 == 0) {
                 if (this->scaleIndex > 3) {
                     this->scaleIndex = 3;
-                    this->unk_2C4 = 0;
+                    this->scaleUpState = 0;
 
-                    if (this->unk_2B0 == 0) {
+                    if (!this->isChasingOtherLabFish) {
                         this->actionFunc = EnFish2_SetupChaseOtherLabFish;
                     } else {
                         EnFish2_SetupSpitUpReward(this);
@@ -789,7 +789,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                 } else {
                     this->unk_2B6 = 0;
                     this->unk_2B4 = 0;
-                    this->unk_2C4 = 0;
+                    this->scaleUpState = 0;
 
                     if (D_80B2B2EC > 200) {
                         D_80B2B2E4 = 0;
@@ -828,7 +828,7 @@ void EnFish2_SetupChaseOtherLabFish(EnFish2* this, PlayState* play) {
 
         if (&this->actor != prop) {
             this->targetActor = prop;
-            this->unk_2B0 = D_80B2B2E8 = 1;
+            this->isChasingOtherLabFish = sIsOneLabFishChasingTheOther = true;
             EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
             this->actionFunc = EnFish2_ChaseOtherLabFish;
             break;
@@ -907,6 +907,7 @@ void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play) {
     }
 
     Play_SetCameraAtEye(play, this->subCamId, &this->subCamAt, &this->subCamEye);
+
     if ((this->targetActor == NULL) || (this->targetActor->update == NULL)) {
         this->targetActor = NULL;
         this->unk_2B0++;
@@ -922,6 +923,7 @@ void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play) {
     Vec3f subCamAt;
 
     Math_Vec3f_Copy(&subCamAt, &this->actor.world.pos);
+
     if (D_80B2B2E4 == 2) {
         subCamAt.x += (Math_SinS(-0x3A98) * 180.0f);
         subCamAt.y += 90.0f;
@@ -1008,15 +1010,18 @@ void EnFish2_SpitUpReward(EnFish2* this, PlayState* play) {
     if ((curFrame >= this->animEndFrame) && (this->animIndex == FISH2_ANIM_SPIT_UP)) {
         D_80B2B2E0 = 0;
         D_80B2B2E4 = 3;
-        this->actor.world.pos.x = this->unk_324.x;
-        this->actor.world.pos.z = this->unk_324.z;
+        this->actor.world.pos.x = this->targetPos.x;
+        this->actor.world.pos.z = this->targetPos.z;
         EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
     }
 }
 
 void EnFish2_Update(Actor* thisx, PlayState* play2) {
     static f32 D_80B2B3A8[] = {
-        0.0f, 40.0f, -40.0f, 0.0f, 0.0f, 0.0f,
+        0.0f,
+        40.0f,
+        -40.0f,
+        0.0f,
     };
     PlayState* play = play2;
     EnFish2* this = THIS;
@@ -1045,13 +1050,13 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
         }
 
         if ((play->gameplayFrames % 8) == 0) {
-            Math_Vec3f_Copy(&bubblePos, &this->unk_324);
+            Math_Vec3f_Copy(&bubblePos, &this->targetPos);
             bubblePos.x += Rand_CenteredFloat(100.0f);
             bubblePos.y = this->actor.floorHeight;
             bubblePos.z += Rand_CenteredFloat(100.0f);
 
             for (i = 0; i < (s32)Rand_CenteredFloat(5.0f) + 10; i++) {
-                EffectSsBubble_Spawn(play, &bubblePos, 0, 5.0f, 5.0f, Rand_ZeroFloat(this->scale * 4.0f) + 0.1f);
+                EffectSsBubble_Spawn(play, &bubblePos, 0.0f, 5.0f, 5.0f, Rand_ZeroFloat(this->scale * 4.0f) + 0.1f);
             }
         }
 
@@ -1063,52 +1068,51 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
         this->wallCheckRadius = 25.0f - ((this->scale - 0.01f) * 1000.0f);
         Actor_SetScale(&this->actor, this->scale);
         Actor_MoveWithGravity(&this->actor);
-        Actor_UpdateBgCheckInfo(play, &this->actor, 0, 15.0f, 10.0f,
+        Actor_UpdateBgCheckInfo(play, &this->actor, 0.0f, 15.0f, 10.0f,
                                 UPDBGCHECKINFO_FLAG_1 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_4);
 
         if (this->actor.params != 2) {
-            this->unk_2D4 = this->actor.floorHeight + (this->scale * 1000.0f);
-            this->unk_2D8 = this->scale * 600.0f;
-            if (this->actor.world.pos.y < this->unk_2D4) {
-                this->actor.world.pos.y = this->unk_2D4 + 0.1f;
+            this->minDistFromFloor = this->actor.floorHeight + (this->scale * 1000.0f);
+            this->minDistFromWaterSurface = this->scale * 600.0f;
+
+            if (this->actor.world.pos.y < this->minDistFromFloor) {
+                this->actor.world.pos.y = this->minDistFromFloor + 0.1f;
             }
 
             if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
                                      &this->waterSurface, &waterBox)) {
                 if ((this->waterSurface != BGCHECK_Y_MIN) &&
-                    (this->waterSurface - this->unk_2D8 < this->actor.world.pos.y)) {
-                    this->actor.world.pos.y = this->waterSurface - this->unk_2D8;
+                    (this->waterSurface - this->minDistFromWaterSurface < this->actor.world.pos.y)) {
+                    this->actor.world.pos.y = this->waterSurface - this->minDistFromWaterSurface;
                 }
             }
 
-            if (!D_80B2B2E8 && (this->actionFunc == EnFish2_Swim)) {
-                s32 temp_s0_2 = this->index * 2;
-                f32 phi_f2;
-                f32 phi_f20;
+            if (!sIsOneLabFishChasingTheOther && (this->actionFunc == EnFish2_Swim)) {
+                s32 i = this->index * 2;
+                f32 lowerBound = 0;
+                f32 upperBound = 0.0f;
                 WaterBox* waterBox;
-
-                phi_f20 = phi_f2 = 0;
 
                 if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
                                          &this->waterSurface, &waterBox)) {
-                    phi_f20 = D_80B2B3A8[temp_s0_2] + (this->waterSurface - this->unk_2D8);
-                    phi_f2 = D_80B2B3A8[temp_s0_2 + 1] + this->unk_2D4;
+                    upperBound = D_80B2B3A8[i] + (this->waterSurface - this->minDistFromWaterSurface);
+                    lowerBound = D_80B2B3A8[i + 1] + this->minDistFromFloor;
                 }
 
-                if ((phi_f20 < this->actor.world.pos.y) && (this->targetRotX < 0)) {
+                if ((upperBound < this->actor.world.pos.y) && (this->targetRotX < 0)) {
                     this->targetRotX = 0;
-                    this->actor.velocity.y = 0;
-                    this->actor.gravity = 0;
+                    this->actor.velocity.y = 0.0f;
+                    this->actor.gravity = 0.0f;
                 }
 
-                if ((this->actor.world.pos.y < phi_f2) && (this->targetRotX > 0)) {
+                if ((this->actor.world.pos.y < lowerBound) && (this->targetRotX > 0)) {
                     this->targetRotX = 0;
-                    this->actor.velocity.y = 0;
-                    this->actor.gravity = 0;
+                    this->actor.velocity.y = 0.0f;
+                    this->actor.gravity = 0.0f;
                 }
             }
 
-            if (!D_80B2B2E8) {
+            if (!sIsOneLabFishChasingTheOther) {
                 CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
             }
         }

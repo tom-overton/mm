@@ -27,31 +27,37 @@ typedef struct EnFish2 {
     /* 0x218 */ Vec3s morphTable[RESEARCH_LAB_FISH_LIMB_MAX];
     /* 0x2A8 */ EnFish2ActionFunc actionFunc;
     /* 0x2AC */ s32 animIndex;
-    /* 0x2B0 */ s32 unk_2B0;
-    /* 0x2B4 */ s16 unk_2B4;
-    /* 0x2B6 */ s16 unk_2B6;
+    /* 0x2B0 */ union {
+                    s32 isChasingOtherLabFish;
+                    s32 unk_2B0;
+                };
+    /* 0x2B4 */ s16 unk_2B4; // wait timer?
+    /* 0x2B6 */ s16 unk_2B6; // timer?
     /* 0x2B8 */ s16 wallCheckTimer;
     /* 0x2BA */ s16 csIdList[3];
     /* 0x2C0 */ s32 scaleIndex;
-    /* 0x2C4 */ s32 unk_2C4;
+    /* 0x2C4 */ union {
+                    s32 scaleUpState;
+                    s32 unk_2C4;
+                };
     /* 0x2C8 */ u8 wasFedBugs;
     /* 0x2CA */ s16 subCamId;
     /* 0x2CC */ f32 animEndFrame;
     /* 0x2D0 */ UNK_TYPE1 unk_2D0[0x4];
-    /* 0x2D4 */ f32 unk_2D4;
-    /* 0x2D8 */ f32 unk_2D8;
+    /* 0x2D4 */ f32 minDistFromFloor;
+    /* 0x2D8 */ f32 minDistFromWaterSurface;
     /* 0x2DC */ Vec3f subCamEye;
     /* 0x2E8 */ Vec3f subCamAt;
     /* 0x2F4 */ Vec3f wallCheckPos;
     /* 0x300 */ Vec3f headPos;
     /* 0x30C */ Vec3f targetActorPos; // set but never used
     /* 0x318 */ Vec3f lowerJawPos;
-    /* 0x324 */ Vec3f unk_324;
+    /* 0x324 */ Vec3f targetPos;
     /* 0x330 */ f32 scale;
     /* 0x334 */ f32 waterSurface;
     /* 0x338 */ f32 targetActorSpeedMultiplier;
     /* 0x33C */ f32 wallCheckRadius;
-    /* 0x340 */ s32 unk_340;
+    /* 0x340 */ s32 direction; // determines which direction the fish should turn when it hits a wall
     /* 0x344 */ s32 index;
     /* 0x348 */ s16 targetRotX;
     /* 0x34A */ s16 targetRotY;
