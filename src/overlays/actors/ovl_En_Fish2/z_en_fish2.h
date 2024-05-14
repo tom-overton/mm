@@ -30,7 +30,7 @@ typedef struct EnFish2 {
     /* 0x2B0 */ s32 unk_2B0;
     /* 0x2B4 */ s16 unk_2B4;
     /* 0x2B6 */ s16 unk_2B6;
-    /* 0x2B8 */ s16 unk_2B8;
+    /* 0x2B8 */ s16 wallCheckTimer;
     /* 0x2BA */ s16 csIdList[3];
     /* 0x2C0 */ s32 scaleIndex;
     /* 0x2C4 */ s32 unk_2C4;
@@ -44,7 +44,7 @@ typedef struct EnFish2 {
     /* 0x2E8 */ Vec3f subCamAt;
     /* 0x2F4 */ Vec3f wallCheckPos;
     /* 0x300 */ Vec3f headPos;
-    /* 0x30C */ Vec3f unk_30C;
+    /* 0x30C */ Vec3f targetActorPos; // set but never used
     /* 0x318 */ Vec3f lowerJawPos;
     /* 0x324 */ Vec3f unk_324;
     /* 0x330 */ f32 scale;
@@ -53,11 +53,11 @@ typedef struct EnFish2 {
     /* 0x33C */ f32 wallCheckRadius;
     /* 0x340 */ s32 unk_340;
     /* 0x344 */ s32 index;
-    /* 0x348 */ s16 unk_348;
-    /* 0x34A */ s16 unk_34A;
-    /* 0x34C */ s16 unk_34C;
-    /* 0x350 */ Actor* unk_350;
-    /* 0x354 */ struct EnFish2* unk_354;
+    /* 0x348 */ s16 targetRotX;
+    /* 0x34A */ s16 targetRotY;
+    /* 0x34C */ s16 angularVelocityModX; // the fish's X-rotation will step by 100 plus this value on every frame
+    /* 0x350 */ Actor* targetActor;
+    /* 0x354 */ struct EnFish2* cutsceneHandler;
     /* 0x358 */ ColliderJntSph collider;
     /* 0x378 */ ColliderJntSphElement colliderElements[2];
     /* 0x3F8 */ EnFish2Effect effects[ENFISH2_EFFECT_COUNT];
