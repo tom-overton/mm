@@ -180,7 +180,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
     this->index = sCurrentIndex;
     sCurrentIndex++;
 
-    if (this->actor.params == 0) {
+    if (ENFISH2_GET_TYPE(&this->actor) == ENFISH2_TYPE_FISH) {
         ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 20.0f);
         SkelAnime_InitFlex(play, &this->skelAnime, &gResearchLabFishSkel, &gResearchLabFishSwimAnim, this->jointTable,
                            this->morphTable, RESEARCH_LAB_FISH_LIMB_MAX);
@@ -233,7 +233,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
         this->collider.elements[1].dim.modelSphere.center.z = 0;
         this->actor.textId = 0x24C;
         EnFish2_SetupSwim(this);
-    } else if (this->actor.params != 0) {
+    } else if (ENFISH2_GET_TYPE(&this->actor) != ENFISH2_TYPE_FISH) {
         this->waitTimer = 10;
         this->actor.draw = NULL;
         this->actor.flags |= ACTOR_FLAG_LOCK_ON_DISABLED;
@@ -244,7 +244,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
 void EnFish2_Destroy(Actor* thisx, PlayState* play) {
     EnFish2* this = THIS;
 
-    if (this->actor.params != 1) {
+    if (ENFISH2_GET_TYPE(&this->actor) != ENFISH2_TYPE_CUTSCENE_HANDLER) {
         Collider_DestroyJntSph(play, &this->collider);
     }
 }
@@ -457,9 +457,9 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
                     EnFish2* cutsceneHandler;
 
                     this->cutsceneHandler = NULL;
-                    cutsceneHandler = (EnFish2*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_FISH2,
-                                                                   this->targetPos.x, this->targetPos.y,
-                                                                   this->targetPos.z, 0, 0, 0, 1);
+                    cutsceneHandler = (EnFish2*)Actor_SpawnAsChild(
+                        &play->actorCtx, &this->actor, play, ACTOR_EN_FISH2, this->targetPos.x, this->targetPos.y,
+                        this->targetPos.z, 0, 0, 0, ENFISH2_TYPE_CUTSCENE_HANDLER);
                     this->cutsceneHandler = cutsceneHandler;
 
                     if (this->cutsceneHandler != NULL) {
@@ -1026,7 +1026,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
     EnFish2* this = THIS;
 
-    if ((this->actionFunc != EnFish2_Swallow) && (this->actor.params != 1)) {
+    if ((this->actionFunc != EnFish2_Swallow) && (ENFISH2_GET_TYPE(&this->actor) != ENFISH2_TYPE_CUTSCENE_HANDLER)) {
         SkelAnime_Update(&this->skelAnime);
     }
 
@@ -1037,12 +1037,12 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
     this->actionFunc(this, play);
     Actor_SetFocus(&this->actor, 0.0f);
 
-    if (this->actor.params != 1) {
+    if (ENFISH2_GET_TYPE(&this->actor) != ENFISH2_TYPE_CUTSCENE_HANDLER) {
         WaterBox* waterBox;
         s32 i;
         Vec3f bubblePos;
 
-        if (this->actor.params == 0) {
+        if (ENFISH2_GET_TYPE(&this->actor) == ENFISH2_TYPE_FISH) {
             Math_SmoothStepToS(&this->actor.world.rot.x, this->targetRotX, 1, this->angularVelocityModX + 0xC8, 0);
             if (this->actionFunc != EnFish2_ScaleUp) {
                 Math_SmoothStepToS(&this->actor.world.rot.y, this->targetRotY, 1, 0xBB8, 0);
@@ -1071,7 +1071,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
         Actor_UpdateBgCheckInfo(play, &this->actor, 0.0f, 15.0f, 10.0f,
                                 UPDBGCHECKINFO_FLAG_1 | UPDBGCHECKINFO_FLAG_2 | UPDBGCHECKINFO_FLAG_4);
 
-        if (this->actor.params != 2) {
+        if (ENFISH2_GET_TYPE(&this->actor) != ENFISH2_TYPE_UNK_2) {
             this->minDistFromFloor = this->actor.floorHeight + (this->scale * 1000.0f);
             this->minDistFromWaterSurface = this->scale * 600.0f;
 

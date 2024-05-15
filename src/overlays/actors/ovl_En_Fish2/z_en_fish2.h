@@ -6,7 +6,15 @@
 
 struct EnFish2;
 
+#define ENFISH2_GET_TYPE(thisx) ((thisx)->params)
+
 typedef void (*EnFish2ActionFunc)(struct EnFish2*, PlayState*);
+
+typedef enum EnFish2Type {
+    /* 0 */ ENFISH2_TYPE_FISH,
+    /* 1 */ ENFISH2_TYPE_CUTSCENE_HANDLER,
+    /* 2 */ ENFISH2_TYPE_UNK_2 // unused and only ever checked once in `EnFish2_Update`; crashes the game if spawned
+} EnFish2Type;
 
 typedef struct EnFish2Effect {
     /* 0x00 */ u8 isEnabled;
