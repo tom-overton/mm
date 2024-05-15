@@ -29,16 +29,16 @@ typedef struct EnFish2 {
     /* 0x2AC */ s32 animIndex;
     /* 0x2B0 */ union {
                     s32 isChasingOtherLabFish;
-                    s32 unk_2B0;
+                    s32 cutsceneWaitTimer;
                 };
-    /* 0x2B4 */ s16 unk_2B4; // wait timer?
-    /* 0x2B6 */ s16 unk_2B6; // timer?
+    /* 0x2B4 */ s16 waitTimer;
+    /* 0x2B6 */ s16 timer;
     /* 0x2B8 */ s16 wallCheckTimer;
     /* 0x2BA */ s16 csIdList[3];
     /* 0x2C0 */ s32 scaleIndex;
     /* 0x2C4 */ union {
                     s32 scaleUpState;
-                    s32 unk_2C4;
+                    s32 frameCounter;
                 };
     /* 0x2C8 */ u8 wasFedBugs;
     /* 0x2CA */ s16 subCamId;

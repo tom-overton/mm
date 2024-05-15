@@ -154,16 +154,16 @@ s32 func_80B28478(EnFish2* this) {
         if ((D_80B2B2E4 != 0) &&
             ((D_80B2B2E0 != 1) || (this->targetActor == NULL) || (this->targetActor->update == NULL)) &&
             !this->isChasingOtherLabFish) {
-            this->unk_2B4 = 0;
-            this->unk_2C4 = 0;
-            this->unk_2B6 = this->unk_2B4;
+            this->waitTimer = 0;
+            this->frameCounter = 0;
+            this->timer = this->waitTimer;
             EnFish2_SetupSwim(this);
             return true;
         }
     } else if ((this->targetActor == NULL) || (this->targetActor->update == NULL)) {
-        this->unk_2B4 = 0;
-        this->unk_2C4 = 0;
-        this->unk_2B6 = this->unk_2B4;
+        this->waitTimer = 0;
+        this->frameCounter = 0;
+        this->timer = this->waitTimer;
         EnFish2_SetupSwim(this);
         return true;
     }
@@ -234,7 +234,7 @@ void EnFish2_Init(Actor* thisx, PlayState* play) {
         this->actor.textId = 0x24C;
         EnFish2_SetupSwim(this);
     } else if (this->actor.params != 0) {
-        this->unk_2B4 = 10;
+        this->waitTimer = 10;
         this->actor.draw = NULL;
         this->actor.flags |= ACTOR_FLAG_LOCK_ON_DISABLED;
         this->actionFunc = EnFish2_CutsceneHandler_80B2A01C;
@@ -253,14 +253,14 @@ void EnFish2_UpdateTargetActorSpeed(EnFish2* this, s32 arg1) {
     Vec3f targetActorPos;
 
     if ((this->cutsceneHandler != NULL) && (!this->wasFedBugs)) {
-        if (this->unk_2C4 < 400) {
-            this->unk_2C4++;
+        if (this->frameCounter < 400) {
+            this->frameCounter++;
         }
 
-        this->targetActorSpeedMultiplier = 440.0f - this->unk_2C4;
+        this->targetActorSpeedMultiplier = 440.0f - this->frameCounter;
 
         if (!arg1) {
-            this->targetActorSpeedMultiplier = 410.0f - this->unk_2C4;
+            this->targetActorSpeedMultiplier = 410.0f - this->frameCounter;
         }
 
         Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->targetActorSpeedMultiplier, 0.1f,
@@ -315,7 +315,7 @@ s32 EnFish2_IsTouchingWall(EnFish2* this, PlayState* play) {
 void EnFish2_UpdateVelocityY(EnFish2* this, PlayState* play) {
     WaterBox* waterBox;
 
-    if (this->unk_2B4 != 0) {
+    if (this->waitTimer != 0) {
         this->targetRotX = 0;
     }
 
@@ -352,12 +352,12 @@ void EnFish2_UpdateVelocityY(EnFish2* this, PlayState* play) {
 
 void EnFish2_SetupSwim(EnFish2* this) {
     EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
-    this->unk_2B4 = 0;
+    this->waitTimer = 0;
     this->targetRotX = 0;
-    this->unk_2C4 = 0;
+    this->frameCounter = 0;
     this->wasFedBugs = false;
     this->waterSurface = BGCHECK_Y_MIN;
-    this->unk_2B6 = this->unk_2B4;
+    this->timer = this->waitTimer;
     this->angularVelocityModX = this->targetRotX;
     this->targetRotY = this->actor.world.rot.y;
 
@@ -392,10 +392,10 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
 
     EnFish2_UpdateVelocityY(this, play);
 
-    if (this->unk_2B6 == 0) {
-        if (this->unk_2B4 == 0) {
-            this->unk_2B4 = (s32)Rand_ZeroFloat(20.0f) + 10;
-        } else if (this->unk_2B4 == 1) {
+    if (this->timer == 0) {
+        if (this->waitTimer == 0) {
+            this->waitTimer = (s32)Rand_ZeroFloat(20.0f) + 10;
+        } else if (this->waitTimer == 1) {
             if ((this->targetRotX == 0) || (Rand_ZeroOne() < 0.6f)) {
                 this->targetRotX = Rand_CenteredFloat(0x2000);
             } else {
@@ -409,9 +409,9 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
                 }
             }
 
-            this->unk_2B6 = (s32)Rand_ZeroFloat(70.0f) + 30;
+            this->timer = (s32)Rand_ZeroFloat(70.0f) + 30;
             if (this->scaleIndex >= 3) {
-                this->unk_2B6 -= (s32)Rand_ZeroFloat(20.0f);
+                this->timer -= (s32)Rand_ZeroFloat(20.0f);
             }
         }
     }
@@ -422,7 +422,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
         this->waterSurface = this->actor.world.pos.y;
     }
 
-    if (this->unk_2B4 == 0) {
+    if (this->waitTimer == 0) {
         Math_ApproachF(&this->actor.speed, (sScales[4] - this->scale) * 400.0f, 0.3f, 0.3f);
         if (this->actor.speed > 3.0f) {
             this->actor.speed = 3.0f;
@@ -498,7 +498,7 @@ void EnFish2_SetupChaseDroppedPrey(EnFish2* this) {
         fish->unk_277 = 1;
     }
 
-    this->unk_2C4 = 0;
+    this->frameCounter = 0;
     this->actor.speed = 0.0f;
 
     if (!this->wasFedBugs) {
@@ -589,7 +589,7 @@ void EnFish2_SetupSwallow(EnFish2* this) {
         D_80B2B2E0 = 2;
     }
 
-    this->unk_2B4 = 10;
+    this->waitTimer = 10;
     this->actor.speed = 3.0f;
     Actor_Kill(this->targetActor);
     this->targetActor = NULL;
@@ -608,7 +608,7 @@ void EnFish2_Swallow(EnFish2* this, PlayState* play) {
     Math_SmoothStepToS(&this->actor.world.rot.y, Math_Vec3f_Yaw(&this->actor.world.pos, &play->view.eye), 1, 0x1388, 0);
     Math_ApproachZeroF(&this->actor.speed, 0.3f, 0.3f);
 
-    if (this->unk_2B4 != 0) {
+    if (this->waitTimer != 0) {
         Math_Vec3f_Copy(&sp60, &this->lowerJawPos);
         sp60.x += Rand_CenteredFloat(100.0f);
         sp60.z += Rand_CenteredFloat(100.0f);
@@ -622,9 +622,9 @@ void EnFish2_Swallow(EnFish2* this, PlayState* play) {
         } else if (!this->wasFedBugs) {
             EnFish2_SetupScaleUp(this);
         } else {
-            this->unk_2B4 = 0;
-            this->unk_2C4 = 0;
-            this->unk_2B6 = this->unk_2B4;
+            this->waitTimer = 0;
+            this->frameCounter = 0;
+            this->timer = this->waitTimer;
             EnFish2_SetupSwim(this);
         }
     }
@@ -632,9 +632,9 @@ void EnFish2_Swallow(EnFish2* this, PlayState* play) {
 
 void EnFish2_SetupScaleUp(EnFish2* this) {
     EnFish2_ChangeAnim(this, FISH2_ANIM_SWIM);
-    this->unk_2B4 = 0;
+    this->waitTimer = 0;
     this->scaleUpState = 0;
-    this->unk_2B6 = this->unk_2B4;
+    this->timer = this->waitTimer;
 
     if (this->isChasingOtherLabFish) {
         this->targetPos.x = this->actor.home.pos.x - 14.0f;
@@ -708,7 +708,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                     this->scaleIndex = 5;
                 }
 
-                this->unk_2B6 = 4;
+                this->timer = 4;
                 Actor_PlaySfx(&this->actor, NA_SE_EV_FISH_GROW_UP);
                 this->scaleUpState++;
             }
@@ -729,7 +729,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
 
             Math_ApproachF(&this->scale, sScales[this->scaleIndex] * scaleMultiplier, 0.3f, 0.004f);
 
-            if (this->unk_2B6 == 0) {
+            if (this->timer == 0) {
                 Vec3f effectPos;
                 s32 i;
                 s32 pad;
@@ -742,7 +742,7 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                 }
 
                 this->scaleUpState++;
-                this->unk_2B6 = 2;
+                this->timer = 2;
             }
             break;
 
@@ -761,22 +761,22 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
 
             Math_ApproachF(&this->scale, sScales[this->scaleIndex] * scaleMultiplier, 0.3f, 0.004f);
 
-            if (this->unk_2B6 == 0) {
-                this->unk_2B6 = 2;
+            if (this->timer == 0) {
+                this->timer = 2;
                 this->scaleUpState++;
             }
             break;
 
         case 8:
             Math_ApproachF(&this->scale, sScales[this->scaleIndex], 0.3f, 0.004f);
-            if (this->unk_2B6 == 0) {
-                this->unk_2B6 = 30;
+            if (this->timer == 0) {
+                this->timer = 30;
                 this->scaleUpState++;
             }
             break;
 
         case 9:
-            if (this->unk_2B6 == 0) {
+            if (this->timer == 0) {
                 if (this->scaleIndex > 3) {
                     this->scaleIndex = 3;
                     this->scaleUpState = 0;
@@ -787,8 +787,8 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                         EnFish2_SetupSpitUpReward(this);
                     }
                 } else {
-                    this->unk_2B6 = 0;
-                    this->unk_2B4 = 0;
+                    this->timer = 0;
+                    this->waitTimer = 0;
                     this->scaleUpState = 0;
 
                     if (D_80B2B2EC > 200) {
@@ -845,11 +845,11 @@ void EnFish2_SetupChaseOtherLabFish(EnFish2* this, PlayState* play) {
 void EnFish2_ChaseOtherLabFish(EnFish2* this, PlayState* play) {
     Vec3f targetActorPos;
 
-    if (this->unk_2C4 < 400) {
-        this->unk_2C4++;
+    if (this->frameCounter < 400) {
+        this->frameCounter++;
     }
 
-    this->targetActorSpeedMultiplier = 410.0f - this->unk_2C4;
+    this->targetActorSpeedMultiplier = 410.0f - this->frameCounter;
     Math_ApproachF(&this->actor.speed, 2.0f, 0.3f, 0.3f);
     Math_ApproachF(&this->targetActor->speed, (sScales[4] - this->scale) * this->targetActorSpeedMultiplier, 0.1f,
                    0.4f);
@@ -865,11 +865,11 @@ void EnFish2_ChaseOtherLabFish(EnFish2* this, PlayState* play) {
 }
 
 void EnFish2_CutsceneHandler_80B2A01C(EnFish2* this, PlayState* play) {
-    if (this->unk_2B4 == 0) {
+    if (this->waitTimer == 0) {
         if (!CutsceneManager_IsNext(this->csIdList[0])) {
             CutsceneManager_Queue(this->csIdList[0]);
         } else {
-            this->unk_2B4 = 15;
+            this->waitTimer = 15;
             CutsceneManager_StartWithPlayerCs(this->csIdList[0], &this->actor);
             this->actionFunc = EnFish2_CutsceneHandler_80B2A094;
         }
@@ -879,7 +879,7 @@ void EnFish2_CutsceneHandler_80B2A01C(EnFish2* this, PlayState* play) {
 void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play) {
     Vec3f subCamEye;
 
-    if (this->unk_2B4 == 0) {
+    if (this->waitTimer == 0) {
         D_80B2B2E4 = 1;
     }
 
@@ -910,10 +910,10 @@ void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play) {
 
     if ((this->targetActor == NULL) || (this->targetActor->update == NULL)) {
         this->targetActor = NULL;
-        this->unk_2B0++;
+        this->cutsceneWaitTimer++;
 
-        if (this->unk_2B0 > 10) {
-            this->unk_2B4 = 20;
+        if (this->cutsceneWaitTimer > 10) {
+            this->waitTimer = 20;
             this->actionFunc = EnFish2_CutsceneHandler_80B2A23C;
         }
     }
@@ -945,7 +945,7 @@ void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play) {
 
     Play_SetCameraAtEye(play, this->subCamId, &this->subCamAt, &this->subCamEye);
 
-    if ((this->unk_2B4 == 0) && (D_80B2B2E4 == 3)) {
+    if ((this->waitTimer == 0) && (D_80B2B2E4 == 3)) {
         D_80B2B2E0 = D_80B2B2EC = D_80B2B2E4 = 0;
         D_80B2B2F4 = NULL;
         CutsceneManager_Stop(this->csIdList[0]);
@@ -955,9 +955,9 @@ void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play) {
 
 void EnFish2_SetupSpitUpReward(EnFish2* this) {
     EnFish2_ChangeAnim(this, FISH2_ANIM_SPIT_UP);
-    this->unk_2B4 = 0;
-    this->unk_2C4 = 0;
-    this->unk_2B6 = this->unk_2B4;
+    this->waitTimer = 0;
+    this->frameCounter = 0;
+    this->timer = this->waitTimer;
     D_80B2B2E4 = 2;
     this->actionFunc = EnFish2_SpitUpReward;
 }
@@ -1031,8 +1031,8 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
     }
 
     DECR(this->wallCheckTimer);
-    DECR(this->unk_2B6);
-    DECR(this->unk_2B4);
+    DECR(this->timer);
+    DECR(this->waitTimer);
 
     this->actionFunc(this, play);
     Actor_SetFocus(&this->actor, 0.0f);
