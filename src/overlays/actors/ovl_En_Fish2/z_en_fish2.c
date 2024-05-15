@@ -1089,6 +1089,7 @@ void EnFish2_Update(Actor* thisx, PlayState* play2) {
 
             if (!sIsOneLabFishChasingTheOther && (this->actionFunc == EnFish2_Swim)) {
                 s32 i = this->index * 2;
+                //! FAKE: Can't find a match using 0.0f here. MM3D initializes this to 0.0f as expected
                 f32 lowerBound = 0;
                 f32 upperBound = 0.0f;
                 WaterBox* waterBox;
