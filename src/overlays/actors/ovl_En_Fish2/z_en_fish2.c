@@ -22,8 +22,8 @@ void EnFish2_Draw(Actor* thisx, PlayState* play);
 
 void EnFish2_SetupSwim(EnFish2* this);
 void EnFish2_Swim(EnFish2* this, PlayState* play);
-void func_80B29128(EnFish2* this);
-void func_80B2913C(EnFish2* this, PlayState* play);
+void EnFish2_SetupChecked(EnFish2* this);
+void EnFish2_Checked(EnFish2* this, PlayState* play);
 void EnFish2_SetupChaseDroppedPrey(EnFish2* this);
 void EnFish2_ChaseDroppedPrey(EnFish2* this, PlayState* play);
 void EnFish2_SetupBite(EnFish2* this);
@@ -374,7 +374,7 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
     WaterBox* waterbox;
 
     if (Actor_TalkOfferAccepted(&this->actor, &play->state)) {
-        func_80B29128(this);
+        EnFish2_SetupChecked(this);
         return;
     }
 
@@ -481,11 +481,11 @@ void EnFish2_Swim(EnFish2* this, PlayState* play) {
     }
 }
 
-void func_80B29128(EnFish2* this) {
-    this->actionFunc = func_80B2913C;
+void EnFish2_SetupChecked(EnFish2* this) {
+    this->actionFunc = EnFish2_Checked;
 }
 
-void func_80B2913C(EnFish2* this, PlayState* play) {
+void EnFish2_Checked(EnFish2* this, PlayState* play) {
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)) {
         Message_CloseTextbox(play);
         EnFish2_SetupSwim(this);
