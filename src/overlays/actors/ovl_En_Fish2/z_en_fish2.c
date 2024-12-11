@@ -46,7 +46,13 @@ void EnFish2_DrawEffects(EnFish2* this, PlayState* play);
 static s32 D_80B2B2E0 = 0;
 static s32 D_80B2B2E4 = 0;
 static s32 sIsOneLabFishChasingTheOther = false;
-static s32 D_80B2B2EC = 0;
+
+/**
+ * This variable *could* be used to stop the swallow cutscene if it goes on for too long, but it's never used for this
+ * purpose in the final game. See `EnFish2_CutsceneHandler_80B2A094` for more information.
+ */
+static s32 sSwallowCutsceneFrameCounter = 0;
+
 static s32 sCurrentIndex = 0;
 static Actor* D_80B2B2F4 = NULL;
 
@@ -791,9 +797,9 @@ void EnFish2_ScaleUp(EnFish2* this, PlayState* play) {
                     this->waitTimer = 0;
                     this->scaleUpState = 0;
 
-                    if (D_80B2B2EC > 200) {
+                    if (sSwallowCutsceneFrameCounter > 200) {
                         D_80B2B2E4 = 0;
-                        D_80B2B2E0 = D_80B2B2EC = 0;
+                        D_80B2B2E0 = sSwallowCutsceneFrameCounter = 0;
                     } else {
                         D_80B2B2E4 = 3;
                     }
@@ -885,10 +891,12 @@ void EnFish2_CutsceneHandler_80B2A094(EnFish2* this, PlayState* play) {
 
     this->subCamId = CutsceneManager_GetCurrentSubCamId(this->csIdList[0]);
 
-    if (D_80B2B2EC != 0) {
-        D_80B2B2EC++;
+    // The below code would stop the swallow cutscene if it's been going on for too long, but it never runs in the final
+    // game since `sSwallowCutsceneFrameCounter` is never set to a non-zero value.
+    if (sSwallowCutsceneFrameCounter != 0) {
+        sSwallowCutsceneFrameCounter++;
 
-        if (D_80B2B2EC > 200) {
+        if (sSwallowCutsceneFrameCounter > 200) {
             Actor_Kill(&this->actor);
             CutsceneManager_Stop(this->csIdList[0]);
             return;
@@ -946,7 +954,7 @@ void EnFish2_CutsceneHandler_80B2A23C(EnFish2* this, PlayState* play) {
     Play_SetCameraAtEye(play, this->subCamId, &this->subCamAt, &this->subCamEye);
 
     if ((this->waitTimer == 0) && (D_80B2B2E4 == 3)) {
-        D_80B2B2E0 = D_80B2B2EC = D_80B2B2E4 = 0;
+        D_80B2B2E0 = sSwallowCutsceneFrameCounter = D_80B2B2E4 = 0;
         D_80B2B2F4 = NULL;
         CutsceneManager_Stop(this->csIdList[0]);
         Actor_Kill(&this->actor);
