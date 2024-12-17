@@ -210,7 +210,7 @@ typedef enum Item00Type {
     /* 0x1B */ ITEM00_MAP,
     /* 0x1C */ ITEM00_COMPASS,
     /* 0x1D */ ITEM00_MUSHROOM_CLOUD,
-
+    /* 0x1E */ ITEM00_BOMBCHU,
     /* 0xFF */ ITEM00_NO_DROP = -1
 } Item00Type;
 

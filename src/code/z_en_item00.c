@@ -152,6 +152,7 @@ void EnItem00_Init(Actor* thisx, PlayState* play) {
         case ITEM00_MAGIC_JAR_SMALL:
         case ITEM00_DEKU_NUTS_10:
         case ITEM00_BOMBS_0:
+        case ITEM00_BOMBCHU:
             Actor_SetScale(thisx, 0.03f);
             this->unk154 = 0.03f;
             shadowOffset = 320.0f;
@@ -296,6 +297,10 @@ void EnItem00_Init(Actor* thisx, PlayState* play) {
         case ITEM00_DEKU_NUTS_10:
             getItemId = GI_DEKU_NUTS_10;
             break;
+        
+        case ITEM00_BOMBCHU:
+            Item_Give(play, ITEM_BOMBCHUS_5);
+            break;
 
         default:
             break;
@@ -425,7 +430,7 @@ void func_800A6780(EnItem00* this, PlayState* play) {
     if (this->actor.params <= ITEM00_RUPEE_RED) {
         this->actor.shape.rot.y += 0x3C0;
     } else if ((this->actor.params >= ITEM00_SHIELD_HERO) && (this->actor.params != ITEM00_DEKU_NUTS_10) &&
-               (this->actor.params != ITEM00_BOMBS_0)) {
+               (this->actor.params != ITEM00_BOMBS_0) && (this->actor.params != ITEM00_BOMBCHU)) {
         this->actor.world.rot.x -= 0x2BC;
         this->actor.shape.rot.y += 0x190;
         this->actor.shape.rot.x = this->actor.world.rot.x - 0x4000;
@@ -645,6 +650,10 @@ void EnItem00_Update(Actor* thisx, PlayState* play) {
             getItemId = GI_COMPASS;
             break;
 
+        case ITEM00_BOMBCHU:
+            Item_Give(play, ITEM_BOMBCHUS_5);
+            break;
+
         default:
             break;
     }
@@ -751,6 +760,7 @@ void EnItem00_Draw(Actor* thisx, PlayState* play) {
             case ITEM00_SMALL_KEY:
             case ITEM00_DEKU_NUTS_10:
             case ITEM00_BOMBS_0:
+            case ITEM00_BOMBCHU:
                 EnItem00_DrawSprite(this, play);
                 break;
 
@@ -815,7 +825,7 @@ TexturePtr sItemDropTextures[] = {
     gDropDekuStickTex,     // Sticks (1)
     gDropMagicLargeTex,    // Magic (Large)
     gDropMagicSmallTex,    // Magic (Small)
-    NULL,
+    gDropBombchuTex,
     gDropKeySmallTex // Small Key
 };
 
@@ -830,6 +840,8 @@ void EnItem00_DrawSprite(EnItem00* this, PlayState* play) {
         texIndex = 6;
     } else if (this->actor.params == ITEM00_BOMBS_0) {
         texIndex = 1;
+    } else if (this->actor.params == ITEM00_BOMBCHU) {
+        texIndex = 10;
     } else if (this->actor.params >= ITEM00_ARROWS_30) {
         texIndex -= 3;
         if (this->actor.params < ITEM00_ARROWS_50) {
@@ -888,7 +900,8 @@ s16 func_800A7650(s16 dropId) {
           (dropId == ITEM00_ARROWS_50)) &&
          (INV_CONTENT(ITEM_BOW) == ITEM_NONE)) ||
         (((dropId == ITEM00_MAGIC_JAR_BIG) || (dropId == ITEM00_MAGIC_JAR_SMALL)) &&
-         (gSaveContext.save.saveInfo.playerData.magicLevel == 0))) {
+         (gSaveContext.save.saveInfo.playerData.magicLevel == 0)) ||
+         ((dropId == ITEM00_BOMBCHU) && (INV_CONTENT(ITEM_BOMBCHU) == ITEM_NONE))) {
         return ITEM00_NO_DROP;
     }
 
@@ -1036,9 +1049,9 @@ u8 sDropTable[DROP_TABLE_SIZE * DROP_TABLE_NUMBER] = {
     ITEM00_NO_DROP,
     ITEM00_BOMBS_A,
     ITEM00_MAGIC_JAR_SMALL,
-    ITEM00_NO_DROP,
-    ITEM00_NO_DROP,
-    ITEM00_NO_DROP,
+    ITEM00_BOMBCHU,
+    ITEM00_BOMBCHU,
+    ITEM00_BOMBCHU,
     ITEM00_RECOVERY_HEART,
     ITEM00_FLEXIBLE,
     ITEM00_RUPEE_GREEN,
