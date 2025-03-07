@@ -71,8 +71,8 @@ s32 EnMttag_IsInFinishLine(Vec3f* pos) {
 }
 
 /**
- * Returns a value in PlayerCheatStatus that indicates if the player is cheating
- * and, if so, what kind of cheating the player is performing.
+ * Returns a value in PlayerCheatStatus that indicates if the player is cheating and, if so, what kind of cheating the
+ * player is performing.
  */
 s32 EnMttag_CheckPlayerCheatStatus(Vec3f* pos) {
     if (!CHECK_EVENTINF(EVENTINF_10)) {
@@ -81,13 +81,12 @@ s32 EnMttag_CheckPlayerCheatStatus(Vec3f* pos) {
             return GORON_RACE_CHEAT_FALSE_START;
         }
     } else if (Math3D_PointInSquare2D(-1127.0f, -1007.0f, -867.0f, -787.0f, pos->x, pos->z)) {
-        // The goal is actually quite close to the start, just behind a large wall.
-        // This checks if the player is in an area "behind" the goal that is not accessible
-        // in normal play; it can only be reached by climbing the wall somehow. Perhaps they
-        // were worried that players would find a way to climb the wall with a glitch, or
-        // perhaps they just wanted to punish people using cheat codes.
+        // The goal is actually quite close to the start, just behind a large wall. This checks if the player is in an
+        // area "behind" the goal that is not accessible in normal play; it can only be reached by climbing the wall
+        // somehow. Perhaps they were worried that players would find a way up there.
         return GORON_RACE_CHEAT_TRYING_TO_REACH_GOAL_FROM_BEHIND;
     }
+
     return GORON_RACE_CHEAT_NO_CHEATING;
 }
 
@@ -124,10 +123,9 @@ s32 EnMttag_AreFourRaceGoronsPresent(EnMttag* this, PlayState* play) {
 
 /**
  * Returns the checkpoint number for the supplied actor.
- * At the start of the race, all race entrants are at checkpoint 1, and their
- * checkpoint number gradually increases as they move forward through the racetrack.
- * The player can have a checkpoint number of -1 if they move far enough backwards
- * from the starting line.
+ * At the start of the race, all race entrants are at checkpoint 1, and their checkpoint number gradually increases as
+ * they move forward through the racetrack. The player can have a checkpoint number of -1 if they move far enough
+ * backwards from the starting line.
  */
 s32 EnMttag_GetCurrentCheckpoint(Actor* actor, PlayState* play, s32* upcomingCheckpoint, f32* outPerpendicularPointX,
                                  f32* outPerpendicularPointZ) {
@@ -140,11 +138,12 @@ s32 EnMttag_GetCurrentCheckpoint(Actor* actor, PlayState* play, s32* upcomingChe
     f32 lineLenSq;
     s32 checkpointIterator;
 
-    // The Goron Racetrack is configured such that the sceneExitIndex for any given floor polygon
-    // gradually increases as you move forward through the racetrack.
+    // The Goron Racetrack is configured such that the sceneExitIndex for any given floor polygon gradually increases as
+    // you move forward through the racetrack.
     sceneExitIndex = SurfaceType_GetSceneExitIndex(&play->colCtx, actor->floorPoly, actor->floorBgId);
-    //! @bug - sStartingCheckpointPerSceneExitIndex is indexed out of bounds when sceneExitIndex is 18, due to the
-    //! `sceneExitIndex + 1` access.
+
+    //! @bug This check does not protect against `sceneExitIndex` being 18, which will cause an out-of-bounds access to
+    //! `sStartingCheckpointPerSceneExitIndex` below due to the `sceneExitIndex + 1` access.
     if ((sceneExitIndex < 4) || (sceneExitIndex >= 19)) {
         //! @bug - upcomingCheckpoint is not initialized here
         return -1;
@@ -176,13 +175,11 @@ s32 EnMttag_GetCurrentCheckpoint(Actor* actor, PlayState* play, s32* upcomingChe
 
 /**
  * Returns true if the player is almost certainly going to lose the race.
- * Specifically, it checks if the player's current checkpoint is 24 or more
- * checkpoints behind the leading racer. This value was probably chosen because
- * falling off the wooden bridge in the middle of the track can set the player
- * back up to 23 checkpoints.
+ * Specifically, it checks if the player's current checkpoint is 24 or more checkpoints behind the leading racer. This
+ * value was probably chosen because falling off the wooden bridge in the middle of the track can set the player back up
+ * to 23 checkpoints.
  *
- * This function also has the side effect of updating the number of checkpoints
- * ahead of the player each Race Goron is.
+ * This function also has the side effect of updating the number of checkpoints ahead of the player each Race Goron is.
  */
 s32 EnMttag_UpdateCheckpoints(EnMttag* this, PlayState* play) {
     Player* player = GET_PLAYER(play);
@@ -198,10 +195,12 @@ s32 EnMttag_UpdateCheckpoints(EnMttag* this, PlayState* play) {
     highestCurrentCheckpoint = -1;
     currentCheckpoints[0] = EnMttag_GetCurrentCheckpoint(&player->actor, play, &upcomingCheckpoints[0],
                                                          &perpendicularPointsX[0], &perpendicularPointsZ[0]);
+
     for (i = 1; i < ARRAY_COUNT(this->raceGorons) + 1; i++) {
         currentCheckpoints[i] =
             EnMttag_GetCurrentCheckpoint(&this->raceGorons[i - 1]->actor, play, &upcomingCheckpoints[i],
                                          &perpendicularPointsX[i], &perpendicularPointsZ[i]);
+
         if (highestCurrentCheckpoint < currentCheckpoints[i]) {
             highestCurrentCheckpoint = currentCheckpoints[i];
         }
@@ -262,8 +261,7 @@ void EnMttag_ShowFalseStartMessage(EnMttag* this, PlayState* play) {
 }
 
 /**
- * Displays the text from the Goron Elder's child which tells the player that
- * they probably can't win the race.
+ * Displays the text from the Goron Elder's child which tells the player that they probably can't win the race.
  */
 void EnMttag_ShowCantWinMessage(EnMttag* this, PlayState* play) {
     Message_StartTextbox(play, 0xE97, NULL); // You can't win now...
@@ -284,19 +282,17 @@ void EnMttag_ShowIntroCutscene(EnMttag* this, PlayState* play) {
 }
 
 /**
- * When the intro cutscene concludes, this sets the weekEventReg to prevent it
- * from showing again and starts the race.
+ * When the intro cutscene concludes, this sets the weekEventReg to prevent it from showing again and starts the race.
  */
 void EnMttag_WaitForIntroCutsceneToEnd(EnMttag* this, PlayState* play) {
     if (CutsceneManager_GetCurrentCsId() != this->actor.csId) {
-        SET_WEEKEVENTREG(WEEKEVENTREG_12_02);
+        SET_WEEKEVENTREG(WEEKEVENTREG_GORON_RACE_INTRO_CS_WATCHED);
         this->actionFunc = EnMttag_RaceStart;
     }
 }
 
 /**
- * Handles the race from when the Gorons are first lined up at the
- * starting block to when the countdown finishes.
+ * Handles the race from when the Gorons are first lined up at the starting block to when the countdown finishes.
  */
 void EnMttag_RaceStart(EnMttag* this, PlayState* play) {
     Player* player = GET_PLAYER(play);
@@ -304,6 +300,7 @@ void EnMttag_RaceStart(EnMttag* this, PlayState* play) {
 
     if (this->raceInitialized == true) {
         playerCheatStatus = EnMttag_CheckPlayerCheatStatus(&player->actor.world.pos);
+
         if (playerCheatStatus != GORON_RACE_CHEAT_NO_CHEATING) {
             if (playerCheatStatus == GORON_RACE_CHEAT_FALSE_START) {
                 this->shouldRestartRace = true;
@@ -343,12 +340,12 @@ s32 EnMttag_IsAnyRaceGoronOverFinishLine(EnMttag* this) {
             break;
         }
     }
+
     return isAnyRaceGoronOverFinishLine;
 }
 
 /**
- * Handles the race from when the countdown finishes to when
- * any race entrant crosses the finish line.
+ * Handles the race from when the countdown finishes to when any race entrant crosses the finish line.
  */
 void EnMttag_Race(EnMttag* this, PlayState* play) {
     Player* player = GET_PLAYER(play);
@@ -371,6 +368,7 @@ void EnMttag_Race(EnMttag* this, PlayState* play) {
         this->actionFunc = EnMttag_RaceFinish;
     } else {
         playerCheatStatus = EnMttag_CheckPlayerCheatStatus(playerPos);
+
         if (playerCheatStatus != GORON_RACE_CHEAT_NO_CHEATING) {
             if (playerCheatStatus == GORON_RACE_CHEAT_FALSE_START) {
                 this->shouldRestartRace = true;
@@ -406,9 +404,8 @@ void EnMttag_RaceFinish(EnMttag* this, PlayState* play) {
 }
 
 /**
- * Restarts the race if this->shouldRestartRace is true. Otherwise, it exits the race.
- * In practice, the only time this exits the race is if the player tries to cheat by
- * reaching the goal from behind.
+ * Restarts the race if this->shouldRestartRace is true. Otherwise, it exits the race. In practice, the only time this
+ * exits the race is if the player tries to cheat by reaching the goal from behind.
  */
 void EnMttag_PotentiallyRestartRace(EnMttag* this, PlayState* play) {
     u8 talkState = Message_GetState(&play->msgCtx);
@@ -440,13 +437,14 @@ void EnMttag_PotentiallyRestartRace(EnMttag* this, PlayState* play) {
         } else {
             EnMttag_ExitRace(play, TRANS_TYPE_FADE_BLACK, TRANS_TYPE_FADE_BLACK);
         }
+
         Actor_Kill(&this->actor);
     }
 }
 
 /**
- * This function either exits the race or resumes it based on how the player
- * responded to the Goron Elder's son's question.
+ * This function either exits the race or resumes it based on how the player responded to the Goron Elder's son's
+ * question.
  */
 void EnMttag_HandleCantWinChoice(EnMttag* this, PlayState* play) {
     if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play)) {
@@ -486,7 +484,7 @@ void EnMttag_Init(Actor* thisx, PlayState* play) {
         CLEAR_EVENTINF(EVENTINF_12);
         CLEAR_EVENTINF(EVENTINF_13);
 
-        if (!CHECK_WEEKEVENTREG(WEEKEVENTREG_12_02)) {
+        if (!CHECK_WEEKEVENTREG(WEEKEVENTREG_GORON_RACE_INTRO_CS_WATCHED)) {
             this->actionFunc = EnMttag_ShowIntroCutscene;
         } else {
             s32 requiredScopeTemp;
