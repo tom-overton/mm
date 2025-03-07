@@ -15,7 +15,7 @@ void EnRg_Draw(Actor* thisx, PlayState* play);
 
 void func_80BF4FC4(EnRg* this, PlayState* play);
 
-s32 D_80BF5C10;
+s32 sTargetingPlayer;
 
 ActorProfile En_Rg_Profile = {
     /**/ ACTOR_EN_RG,
@@ -115,14 +115,14 @@ s32 sStartingPointPerSceneExitIndex[][4] = {
 
 typedef enum EnRgAnimation {
     /* -1 */ RG_ANIM_NONE = -1,
-    /*  0 */ RG_ANIM_0,
-    /*  1 */ RG_ANIM_1,
+    /*  0 */ RG_ANIM_UNROLL,
+    /*  1 */ RG_ANIM_ROLL_UP,
     /*  2 */ RG_ANIM_MAX
 } EnRgAnimation;
 
 static AnimationInfoS sAnimationInfo[RG_ANIM_MAX] = {
-    { &gGoronUnrollAnim, 2.0f, 0, -1, ANIMMODE_ONCE, 0 },  // RG_ANIM_0
-    { &gGoronUnrollAnim, -2.0f, 0, -1, ANIMMODE_ONCE, 0 }, // RG_ANIM_1
+    { &gGoronUnrollAnim, 2.0f, 0, -1, ANIMMODE_ONCE, 0 },  // RG_ANIM_UNROLL
+    { &gGoronUnrollAnim, -2.0f, 0, -1, ANIMMODE_ONCE, 0 }, // RG_ANIM_ROLL_UP
 };
 
 static TexturePtr sDustTextures[] = {
@@ -268,8 +268,8 @@ void EnRg_UpdateSkelAnime(EnRg* this) {
     SkelAnime_Update(&this->skelAnime);
 }
 
-s32 func_80BF4024(EnRg* this, PlayState* play) {
-    if ((play->csCtx.state == CS_STATE_IDLE) && (this->animIndex == RG_ANIM_1)) {
+s32 EnRg_PlayRollUpSfx(EnRg* this, PlayState* play) {
+    if ((play->csCtx.state == CS_STATE_IDLE) && (this->animIndex == RG_ANIM_ROLL_UP)) {
         if (Animation_OnFrame(&this->skelAnime, 2.0f)) {
             Actor_PlaySfx(&this->actor, NA_SE_EN_GOLON_CIRCLE);
         }
@@ -448,11 +448,11 @@ s32 EnRg_CheckForWallOrAcCollisions(EnRg* this) {
     }
 
     if (sp24) {
-        this->flags &= ~ENRG_FLAG_11;
+        this->flags &= ~ENRG_FLAG_HAS_TARGET_ACTOR;
         this->flags &= ~ENRG_FLAG_AC_HIT;
 
         if ((this->targetActor != NULL) && (this->targetActor->id == ACTOR_PLAYER)) {
-            D_80BF5C10 = false;
+            sTargetingPlayer = false;
         }
 
         this->targetActor = NULL;
@@ -483,7 +483,7 @@ s32 func_80BF47AC(EnRg* this, PlayState* play) {
     } else if (this->numCheckpointsAheadOfPlayer == 0) {
         s16 yawDiff = this->actor.yawTowardsPlayer - this->actor.world.rot.y;
 
-        if ((ABS_ALT(yawDiff) > 0x4000) || (this->unk_326 > 0)) {
+        if ((ABS_ALT(yawDiff) > 0x4000) || (this->playerCollisionTimer > 0)) {
             targetSpeed = baseSpeed * 0.72f;
         } else {
             targetSpeed = baseSpeed * 0.94f;
@@ -528,7 +528,7 @@ void EnRg_UpdatePath(EnRg* this) {
 
         DECR(this->collisionTimer);
         DECR(this->treeCollisionTimer);
-        DECR(this->unk_326);
+        DECR(this->playerCollisionTimer);
 
         if (!(this->flags & ENRG_FLAG_BOUNCING_IN_AIR) && !(this->flags & ENRG_FLAG_CROSSED_FINISH_LINE) &&
             (this->collisionTimer == 0) && (this->treeCollisionTimer == 0) &&
@@ -544,18 +544,18 @@ void EnRg_UpdatePath(EnRg* this) {
     }
 }
 
-void func_80BF4AB8(EnRg* this, PlayState* play) {
+void EnRg_UpdateTargetActor(EnRg* this, PlayState* play) {
     Player* player = GET_PLAYER(play);
     Actor* actorIter = NULL;
 
-    if (!(this->flags & ENRG_FLAG_11)) {
+    if (!(this->flags & ENRG_FLAG_HAS_TARGET_ACTOR)) {
         if (this->boostTimer == 0) {
             do {
                 actorIter = SubS_FindActor(play, actorIter, ACTORCAT_PROP, ACTOR_OBJ_TSUBO);
                 if (actorIter != NULL) {
                     if (EnRg_IsValidTargetActor(this, play, actorIter) && (actorIter->update != NULL)) {
                         this->targetActor = actorIter;
-                        this->flags |= ENRG_FLAG_11;
+                        this->flags |= ENRG_FLAG_HAS_TARGET_ACTOR;
                         break;
                     }
                     actorIter = actorIter->next;
@@ -563,19 +563,20 @@ void func_80BF4AB8(EnRg* this, PlayState* play) {
             } while (actorIter != NULL);
         }
 
-        if ((actorIter == NULL) && !D_80BF5C10 && (this->unk_326 == 0) && (player->stateFlags3 & PLAYER_STATE3_80000) &&
-            (player->invincibilityTimer == 0) && EnRg_IsValidTargetActor(this, play, &player->actor)) {
+        if ((actorIter == NULL) && !sTargetingPlayer && (this->playerCollisionTimer == 0) &&
+            (player->stateFlags3 & PLAYER_STATE3_80000) && (player->invincibilityTimer == 0) &&
+            EnRg_IsValidTargetActor(this, play, &player->actor)) {
             this->targetActor = &player->actor;
-            this->flags |= ENRG_FLAG_11;
-            D_80BF5C10 = true;
+            this->flags |= ENRG_FLAG_HAS_TARGET_ACTOR;
+            sTargetingPlayer = true;
         }
     } else if ((this->targetActor != NULL) && !EnRg_IsValidTargetActor(this, play, this->targetActor)) {
         if (this->targetActor->id == ACTOR_PLAYER) {
-            D_80BF5C10 = false;
+            sTargetingPlayer = false;
         }
 
         this->targetActor = NULL;
-        this->flags &= ~ENRG_FLAG_11;
+        this->flags &= ~ENRG_FLAG_HAS_TARGET_ACTOR;
     }
 
     if (this->flags & ENRG_FLAG_AT_HIT) {
@@ -585,7 +586,7 @@ void func_80BF4AB8(EnRg* this, PlayState* play) {
                 this->boostTimer += 400;
                 this->boostTimer = CLAMP_MAX(this->boostTimer, 400);
             } else if (this->colliderSphere.base.at->id == ACTOR_PLAYER) {
-                this->unk_326 = 40;
+                this->playerCollisionTimer = 40;
 
                 if (player->stateFlags3 & PLAYER_STATE3_1000) {
                     player->speedXZ *= 0.5f;
@@ -605,13 +606,13 @@ void func_80BF4AB8(EnRg* this, PlayState* play) {
                 }
 
                 if ((this->targetActor != NULL) && (this->targetActor->id == ACTOR_PLAYER)) {
-                    D_80BF5C10 = false;
+                    sTargetingPlayer = false;
                 }
             }
         }
 
         this->targetActor = NULL;
-        this->flags &= ~ENRG_FLAG_11;
+        this->flags &= ~ENRG_FLAG_HAS_TARGET_ACTOR;
         this->flags &= ~ENRG_FLAG_AT_HIT;
     }
 }
@@ -624,7 +625,7 @@ s32 EnRg_IsInFinishLine(Vec3f* pos) {
     return Math3D_PointInSquare2D(-1261.0f, -901.0f, -1600.0f, -1520.0f, pos->x, pos->z);
 }
 
-Vec3f sGoronRacetrackTreePositions[] = {
+static Vec3f sGoronRacetrackTreePositions[] = {
     { -2473.0f, 39.0f, 7318.0f },
     { -2223.0f, 142.0f, 7184.0f },
     { -2281.0f, 41.0f, 7718.0f },
@@ -658,10 +659,10 @@ s32 EnRg_CheckForTreeCollisions(EnRg* this) {
             }
 
             this->treeCollisionTimer = 20;
-            this->flags &= ~ENRG_FLAG_11;
+            this->flags &= ~ENRG_FLAG_HAS_TARGET_ACTOR;
 
             if ((this->targetActor != NULL) && (this->targetActor->id == ACTOR_PLAYER)) {
-                D_80BF5C10 = false;
+                sTargetingPlayer = false;
             }
 
             this->targetActor = NULL;
@@ -684,7 +685,7 @@ void func_80BF4EBC(EnRg* this, PlayState* play) {
         }
     } else if (CHECK_WEEKEVENTREG(WEEKEVENTREG_GORON_RACE_INTRO_CS_WATCHED)) {
         if (DECR(this->timer) == 0) {
-            EnRg_ChangeAnim(this, RG_ANIM_1);
+            EnRg_ChangeAnim(this, RG_ANIM_ROLL_UP);
             this->flags &= ~ENRG_FLAG_3;
             this->flags &= ~ENRG_FLAG_ROLLED_UP;
             this->flags |= ENRG_FLAG_8;
@@ -720,7 +721,7 @@ void func_80BF4FC4(EnRg* this, PlayState* play) {
 
         if ((this->targetActor != NULL) && (this->targetActor->update == NULL)) {
             this->targetActor = NULL;
-            this->flags &= ~ENRG_FLAG_11;
+            this->flags &= ~ENRG_FLAG_HAS_TARGET_ACTOR;
         }
 
         if (CHECK_EVENTINF(EVENTINF_10)) {
@@ -728,7 +729,7 @@ void func_80BF4FC4(EnRg* this, PlayState* play) {
                 func_80BF47AC(this, play);
 
                 if ((this->treeCollisionTimer == 0) && !EnRg_CheckForTreeCollisions(this)) {
-                    func_80BF4AB8(this, play);
+                    EnRg_UpdateTargetActor(this, play);
                 }
 
                 if (EnRg_CheckForWallOrAcCollisions(this)) {
@@ -758,7 +759,7 @@ void EnRg_Init(Actor* thisx, PlayState* play) {
                            GORON_LIMB_MAX);
 
         this->animIndex = RG_ANIM_NONE;
-        EnRg_ChangeAnim(this, RG_ANIM_0);
+        EnRg_ChangeAnim(this, RG_ANIM_UNROLL);
         this->skelAnime.curFrame = this->skelAnime.endFrame;
 
         Collider_InitAndSetSphere(play, &this->colliderSphere, &this->actor, &sSphereInit);
@@ -812,7 +813,7 @@ void EnRg_Update(Actor* thisx, PlayState* play) {
     if (!(this->flags & ENRG_FLAG_ROLLED_UP)) {
         EnRg_Blink(this);
         EnRg_UpdateSkelAnime(this);
-        func_80BF4024(this, play);
+        EnRg_PlayRollUpSfx(this, play);
     }
 
     Actor_UpdateBgCheckInfo(play, &this->actor, 30.0f, 20.0f, 0.0f,

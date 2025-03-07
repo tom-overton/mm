@@ -21,7 +21,7 @@ typedef void (*EnRgActionFunc)(struct EnRg*, PlayState*);
 #define ENRG_FLAG_OC1_HIT (1 << 7)
 #define ENRG_FLAG_8 (1 << 8)
 #define ENRG_FLAG_BOUNCING_IN_AIR (1 << 10)
-#define ENRG_FLAG_11 (1 << 11)
+#define ENRG_FLAG_HAS_TARGET_ACTOR (1 << 11)
 #define ENRG_FLAG_CROSSED_FINISH_LINE (1 << 12)
 
 typedef struct {
@@ -55,7 +55,7 @@ typedef struct EnRg {
     /* 0x320 */ s16 boostTimer;
     /* 0x322 */ s16 collisionTimer;
     /* 0x324 */ s16 treeCollisionTimer;
-    /* 0x326 */ s16 unk_326;
+    /* 0x326 */ s16 playerCollisionTimer;
     /* 0x328 */ s16 fidgetTableZ[ENRG_FIDGET_TABLE_LEN];
     /* 0x32E */ s16 fidgetTableY[ENRG_FIDGET_TABLE_LEN];
     /* 0x334 */ s32 animIndex;

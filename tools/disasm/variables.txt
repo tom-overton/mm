@@ -15882,7 +15882,7 @@
     0x80BF5A3C:("D_80BF5A3C","f32","",0x4),
     0x80BF5A40:("D_80BF5A40","f32","",0x4),
     0x80BF5A44:("D_80BF5A44","f32","",0x4),
-    0x80BF5C10:("D_80BF5C10","UNK_TYPE1","",0x1),
+    0x80BF5C10:("sTargetingPlayer","UNK_TYPE1","",0x1),
     0x80BF6F80:("En_Osk_Profile","UNK_TYPE1","",0x1),
     0x80BF6FA0:("sAnimationsType0","UNK_PTR","",0x4),
     0x80BF6FB4:("sAnimationsType1","UNK_TYPE1","",0x1),
