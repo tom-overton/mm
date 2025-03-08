@@ -164,7 +164,7 @@ void EnRg_DrawDustEffects(EnRgEffect* effect, PlayState* play2) {
 
         Matrix_Push();
 
-        temp_f20 = (f32)effect->unk_02 / effect->unk_01;
+        temp_f20 = (f32)effect->timer / effect->unk_01;
 
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, D_80BF5954[effect->unk_00 - 4].r, D_80BF5954[effect->unk_00 - 4].g,
                         D_80BF5954[effect->unk_00 - 4].b, (u8)(temp_f20 * 255.0f));
@@ -191,7 +191,7 @@ void EnRg_UpdateEffects(EnRg* this) {
 
     for (i = 0; i < ARRAY_COUNT(this->effects); i++, effect++) {
         if (effect->unk_00) {
-            if (!effect->unk_02) {
+            if (effect->timer == 0) {
                 effect->unk_00 = 0;
             } else {
                 effect->pos.x += effect->velocity.x;
@@ -201,7 +201,7 @@ void EnRg_UpdateEffects(EnRg* this) {
                 effect->velocity.y += effect->accel.y;
                 effect->velocity.z += effect->accel.z;
                 effect->scale += effect->unk_38;
-                effect->unk_02--;
+                effect->timer--;
             }
         }
     }
@@ -331,7 +331,7 @@ s32 EnRg_IsValidTargetActor(EnRg* this, PlayState* play, Actor* targetActor) {
     return false;
 }
 
-s32 func_80BF42BC(EnRg* this, f32 targetSpeed) {
+s32 EnRg_ApproachTargetSpeed(EnRg* this, f32 targetSpeed) {
     f32 sp2C;
     s32 sp24;
 
@@ -462,7 +462,7 @@ s32 EnRg_CheckForWallOrAcCollisions(EnRg* this) {
     return ret;
 }
 
-s32 func_80BF47AC(EnRg* this, PlayState* play) {
+s32 EnRg_UpdateSpeed(EnRg* this, PlayState* play) {
     Player* player = GET_PLAYER(play);
     f32 targetSpeed;
     f32 boostSpeed;
@@ -500,7 +500,7 @@ s32 func_80BF47AC(EnRg* this, PlayState* play) {
         targetSpeed += boostSpeed;
     }
 
-    func_80BF42BC(this, targetSpeed);
+    EnRg_ApproachTargetSpeed(this, targetSpeed);
 
     return false;
 }
@@ -726,7 +726,7 @@ void func_80BF4FC4(EnRg* this, PlayState* play) {
 
         if (CHECK_EVENTINF(EVENTINF_10)) {
             if (DECR(this->timer) == 0) {
-                func_80BF47AC(this, play);
+                EnRg_UpdateSpeed(this, play);
 
                 if ((this->treeCollisionTimer == 0) && !EnRg_CheckForTreeCollisions(this)) {
                     EnRg_UpdateTargetActor(this, play);
