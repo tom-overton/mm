@@ -17101,3 +17101,8 @@ EnRsn_Update = 0x80C28C98; // type:func
 EnRsn_OverrideLimbDraw = 0x80C28D10; // type:func
 EnRsn_PostLimbDraw = 0x80C28D50; // type:func
 EnRsn_Draw = 0x80C28DAC; // type:func
+
+BgHeavyBlock_Init = 0x808D8378; // type:func
+BgHeavyBlock_Destroy = 0x808D8590; // type:func
+BgHeavyBlock_Update = 0x808D94C8; // type:func
+BgHeavyBlock_Draw = 0x808D94EC; // type:func
