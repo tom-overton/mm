@@ -152,7 +152,7 @@ void EnRg_DrawDustEffects(EnRgEffect* effect, PlayState* play2) {
     Gfx_SetupDL25_Xlu(play->state.gfxCtx);
 
     for (i = 0; i < 32; i++, effect++) {
-        if ((effect->unk_00 < 4) || (effect->unk_00 >= 7)) {
+        if ((effect->type < 4) || (effect->type >= 7)) {
             continue;
         }
 
@@ -166,10 +166,10 @@ void EnRg_DrawDustEffects(EnRgEffect* effect, PlayState* play2) {
 
         temp_f20 = (f32)effect->timer / effect->unk_01;
 
-        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, D_80BF5954[effect->unk_00 - 4].r, D_80BF5954[effect->unk_00 - 4].g,
-                        D_80BF5954[effect->unk_00 - 4].b, (u8)(temp_f20 * 255.0f));
-        gDPSetEnvColor(POLY_XLU_DISP++, D_80BF5960[effect->unk_00 - 4].r, D_80BF5960[effect->unk_00 - 4].g,
-                       D_80BF5960[effect->unk_00 - 4].b, 0);
+        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, D_80BF5954[effect->type - 4].r, D_80BF5954[effect->type - 4].g,
+                        D_80BF5954[effect->type - 4].b, (u8)(temp_f20 * 255.0f));
+        gDPSetEnvColor(POLY_XLU_DISP++, D_80BF5960[effect->type - 4].r, D_80BF5960[effect->type - 4].g,
+                       D_80BF5960[effect->type - 4].b, 0);
 
         Matrix_Translate(effect->pos.x, effect->pos.y, effect->pos.z, MTXMODE_NEW);
         Matrix_Scale(effect->scale, effect->scale, 1.0f, MTXMODE_APPLY);
@@ -190,9 +190,9 @@ void EnRg_UpdateEffects(EnRg* this) {
     s32 i;
 
     for (i = 0; i < ARRAY_COUNT(this->effects); i++, effect++) {
-        if (effect->unk_00) {
+        if (effect->type) {
             if (effect->timer == 0) {
-                effect->unk_00 = 0;
+                effect->type = 0;
             } else {
                 effect->pos.x += effect->velocity.x;
                 effect->pos.y += effect->velocity.y;

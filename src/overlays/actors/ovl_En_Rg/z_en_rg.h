@@ -25,7 +25,7 @@ typedef void (*EnRgActionFunc)(struct EnRg*, PlayState*);
 #define ENRG_FLAG_CROSSED_FINISH_LINE (1 << 12)
 
 typedef struct EnRgEffect {
-    /* 0x00 */ u8 unk_00;
+    /* 0x00 */ u8 type;
     /* 0x01 */ u8 unk_01;
     /* 0x02 */ u8 timer;
     /* 0x03 */ UNK_TYPE1 unk_03[0xD];
