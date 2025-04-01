@@ -144,7 +144,7 @@ Color_RGBA8 D_80BF5960[] = {
 void EnRg_DrawDustEffects(EnRgEffect* effect, PlayState* play2) {
     PlayState* play = play2;
     f32 temp_f20;
-    u8 phi_fp = false;
+    u8 flag = false;
     s32 i;
 
     OPEN_DISPS(play->state.gfxCtx);
@@ -156,10 +156,10 @@ void EnRg_DrawDustEffects(EnRgEffect* effect, PlayState* play2) {
             continue;
         }
 
-        if (!phi_fp) {
+        if (!flag) {
             POLY_XLU_DISP = Gfx_SetupDL(POLY_XLU_DISP, SETUPDL_0);
             gSPDisplayList(POLY_XLU_DISP++, gGoronDustMaterialDL);
-            phi_fp = true;
+            flag = true;
         }
 
         Matrix_Push();
@@ -197,9 +197,11 @@ void EnRg_UpdateEffects(EnRg* this) {
                 effect->pos.x += effect->velocity.x;
                 effect->pos.y += effect->velocity.y;
                 effect->pos.z += effect->velocity.z;
+
                 effect->velocity.x += effect->accel.x;
                 effect->velocity.y += effect->accel.y;
                 effect->velocity.z += effect->accel.z;
+
                 effect->scale += effect->unk_38;
                 effect->timer--;
             }
